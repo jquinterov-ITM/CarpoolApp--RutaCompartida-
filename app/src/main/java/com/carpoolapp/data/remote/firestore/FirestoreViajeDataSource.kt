@@ -16,13 +16,13 @@ class FirestoreViajeDataSource @Inject constructor(
 
     fun getFeed(usuarioId: String): Flow<List<ViajeDto>> = callbackFlow {
         val listener = collection
-            .whereNotEqualTo("estado", "CANCELADO")
-            .whereNotEqualTo("conductorId", usuarioId)
             .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(error); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject<ViajeDto>()?.copy(id = doc.id)
+                }?.filter { 
+                    it.estado != "CANCELADO" && it.conductorId != usuarioId 
                 } ?: emptyList()
                 trySend(viajes)
             }
@@ -31,14 +31,16 @@ class FirestoreViajeDataSource @Inject constructor(
 
     fun getFeedPorDestino(usuarioId: String, destino: String): Flow<List<ViajeDto>> = callbackFlow {
         val listener = collection
-            .whereNotEqualTo("estado", "CANCELADO")
-            .whereNotEqualTo("conductorId", usuarioId)
             .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(error); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject<ViajeDto>()?.copy(id = doc.id)
-                }?.filter { it.destino.contains(destino, ignoreCase = true) } ?: emptyList()
+                }?.filter { 
+                    it.estado != "CANCELADO" && 
+                    it.conductorId != usuarioId &&
+                    it.destino.contains(destino, ignoreCase = true) 
+                } ?: emptyList()
                 trySend(viajes)
             }
         awaitClose { listener.remove() }

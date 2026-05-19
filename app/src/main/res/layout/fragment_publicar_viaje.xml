@@ -72,25 +72,41 @@
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginTop="24dp" />
 
+        <TextView
+            android:id="@+id/tipo_helper"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Selecciona una opción:"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            app:layout_constraintTop_toBottomOf="@id/tipo_label"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="4dp" />
+
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/tipo_toggle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/tipo_label"
+            app:layout_constraintTop_toBottomOf="@id/tipo_helper"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            android:layout_marginTop="12dp"
-            app:singleSelection="true">
+            android:layout_marginTop="8dp"
+            app:singleSelection="true"
+            app:selectionRequired="true">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_inmediato"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="@string/label_inmediato"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:checked="false" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_programado"
+                style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:text="@string/label_programado"

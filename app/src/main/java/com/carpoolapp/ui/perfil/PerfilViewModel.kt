@@ -17,6 +17,7 @@ sealed class PerfilUiState {
     object Loading : PerfilUiState()
     data class Success(val usuario: Usuario) : PerfilUiState()
     data class Error(val mensaje: String) : PerfilUiState()
+    object VehiculoActualizado : PerfilUiState()
 }
 
 @HiltViewModel
@@ -52,6 +53,7 @@ class PerfilViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 usuarioRepository.actualizarVehiculo(uid, vehiculo)
+                _uiState.value = PerfilUiState.VehiculoActualizado
             } catch (e: Exception) {
                 _uiState.value = PerfilUiState.Error(e.message ?: "Error al actualizar")
             }

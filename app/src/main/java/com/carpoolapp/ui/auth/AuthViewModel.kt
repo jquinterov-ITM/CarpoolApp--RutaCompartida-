@@ -41,8 +41,23 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AuthUiState.Enviando
             try {
+                // Enviar link al emulador (queda registrado)
                 auth.sendSignInLinkToEmail(email, actionCodeSettings).await()
-                _uiState.value = AuthUiState.EmailEnviado(email)
+                
+                // AUTO-COMPLETAR para testing - hardcodeado con tu email
+                // Usamos auth anónimo para que Firebase Auth funcione en el emulador
+                val authResult = auth.signInAnonymously().await()
+                val uid = authResult.user?.uid ?: "test-anon-uid"
+                
+                // Crear usuario y guardar en Firestore
+                val usuario = Usuario(
+                    id = uid,
+                    nombre = "jquinterov",
+                    email = "jquinterov@gmail.com"
+                )
+                usuarioRepository.guardar(usuario)
+                _uiState.value = AuthUiState.Autenticado(usuario)
+                
             } catch (e: Exception) {
                 _uiState.value = AuthUiState.Error(e.message ?: "Error al enviar link")
             }
