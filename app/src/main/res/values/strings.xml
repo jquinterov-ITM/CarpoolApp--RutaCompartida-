@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CarpoolApp</string>
+    <string name="nav_home">Inicio</string>
+    <string name="nav_buscar">Buscar</string>
+    <string name="nav_mis_viajes">Mis Viajes</string>
+    <string name="nav_perfil">Perfil</string>
+    <string name="btn_publicar_viaje">Publicar Viaje</string>
+    <string name="btn_solicitar">Solicitar</string>
+    <string name="btn_aceptar">Aceptar</string>
+    <string name="btn_rechazar">Rechazar</string>
+    <string name="btn_cancelar">Cancelar</string>
+    <string name="btn_guardar">Guardar</string>
+    <string name="label_origen">Origen</string>
+    <string name="label_destino">Destino</string>
+    <string name="label_fecha">Fecha y Hora</string>
+    <string name="label_asientos">Asientos disponibles</string>
+    <string name="label_tipo_viaje">Tipo de viaje</string>
+    <string name="label_inmediato">Inmediato</string>
+    <string name="label_programado">Programado</string>
+    <string name="label_conductor">Conductor</string>
+    <string name="label_estado">Estado</string>
+    <string name="label_email">Correo electrónico</string>
+    <string name="label_vehiculo">Vehículo</string>
+    <string name="msg_cargando">Cargando…</string>
+    <string name="msg_sin_viajes">No hay viajes disponibles</string>
+    <string name="msg_error_red">Error de conexión. Intenta de nuevo.</string>
+    <string name="msg_solicitud_enviada">Solicitud enviada</string>
+    <string name="msg_solicitud_aceptada">¡Solicitud aceptada!</string>
+    <string name="msg_solicitud_rechazada">Solicitud rechazada</string>
+    <string name="msg_enviar_email">Enviar link de acceso</string>
+    <string name="msg_revisa_email">Revisa tu correo para el link de acceso</string>
+    <string name="msg_sesion_iniciada">Sesión iniciada</string>
+    <string name="msg_cerrar_sesion">Cerrar sesión</string>
+</resources>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/authFragment">
+
+    <fragment
+        android:id="@+id/authFragment"
+        android:name="com.carpoolapp.ui.auth.AuthFragment"
+        android:label="Auth">
+        <action
+            android:id="@+id/action_auth_to_home"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/authFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.carpoolapp.ui.home.HomeFragment"
+        android:label="@string/nav_home">
+        <action
+            android:id="@+id/action_home_to_detalle"
+            app:destination="@id/viajeDetalleFragment" />
+        <action
+            android:id="@+id/action_home_to_publicar"
+            app:destination="@id/publicarViajeFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/buscarFragment"
+        android:name="com.carpoolapp.ui.buscar.BuscarViajeFragment"
+        android:label="@string/nav_buscar">
+        <action
+            android:id="@+id/action_buscar_to_detalle"
+            app:destination="@id/viajeDetalleFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/misViajesFragment"
+        android:name="com.carpoolapp.ui.mis_viajes.MisViajesFragment"
+        android:label="@string/nav_mis_viajes">
+        <action
+            android:id="@+id/action_misViajes_to_solicitudes"
+            app:destination="@id/solicitudesFragment" />
+        <action
+            android:id="@+id/action_misViajes_to_detalle"
+            app:destination="@id/viajeDetalleFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/perfilFragment"
+        android:name="com.carpoolapp.ui.perfil.PerfilFragment"
+        android:label="@string/nav_perfil" />
+
+    <fragment
+        android:id="@+id/publicarViajeFragment"
+        android:name="com.carpoolapp.ui.publicar.PublicarViajeFragment"
+        android:label="@string/btn_publicar_viaje" />
+
+    <fragment
+        android:id="@+id/viajeDetalleFragment"
+        android:name="com.carpoolapp.ui.detalle.ViajeDetalleFragment"
+        android:label="Detalle del Viaje">
+        <argument
+            android:name="tripId"
+            app:argType="string" />
+        <argument
+            android:name="esConductor"
+            app:argType="boolean"
+            android:defaultValue="false" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/solicitudesFragment"
+        android:name="com.carpoolapp.ui.solicitudes.SolicitudesFragment"
+        android:label="Solicitudes">
+        <argument
+            android:name="tripId"
+            app:argType="string" />
+    </fragment>
+
+</navigation>
