@@ -5,6 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.viewModels
+import com.google.android.material.transition.MaterialContainerTransform
+import android.graphics.Color
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -26,8 +29,33 @@ class ViajeDetalleFragment : BaseFragment<FragmentViajeDetalleBinding>() {
     ): FragmentViajeDetalleBinding =
         FragmentViajeDetalleBinding.inflate(inflater, container, false)
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Configure shared element container transform
+        sharedElementEnterTransition = MaterialContainerTransform().apply {
+            drawingViewId = com.carpoolapp.R.id.nav_host_fragment
+            // Slightly longer enter for a pleasant reveal
+            duration = 350L
+            scrimColor = Color.parseColor("#22000000")
+            setAllContainerColors(requireContext().getColor(com.carpoolapp.R.color.surface))
+        }
+        sharedElementReturnTransition = MaterialContainerTransform().apply {
+            drawingViewId = com.carpoolapp.R.id.nav_host_fragment
+            // Faster return
+            duration = 220L
+            scrimColor = Color.parseColor("#22000000")
+            setAllContainerColors(requireContext().getColor(com.carpoolapp.R.color.surface))
+        }
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Ensure root has same transitionName as provided by the adapter
+        val tripId = arguments?.getString("tripId")
+        if (!tripId.isNullOrEmpty()) {
+            ViewCompat.setTransitionName(binding.root, "trip_${'$'}{tripId}")
+        }
 
         binding.btnSolicitar.setOnClickListener {
             viewModel.enviarSolicitud()

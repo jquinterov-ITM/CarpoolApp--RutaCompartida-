@@ -10,6 +10,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -33,13 +34,12 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = ViajeAdapter { viaje ->
-            findNavController().navigate(
-                HomeFragmentDirections.actionHomeToDetalle(
-                    tripId = viaje.id,
-                    esConductor = false
-                )
-            )
+        adapter = ViajeAdapter { viaje, sharedView ->
+            // assign a stable transition name and navigate with shared element
+            val transitionName = "trip_${'$'}{viaje.id}"
+            sharedView.transitionName = transitionName
+            val extras = FragmentNavigatorExtras(sharedView to transitionName)
+            findNavController().navigate(HomeFragmentDirections.actionHomeToDetalle(tripId = viaje.id, esConductor = false), extras)
         }
         binding.rvViajes.adapter = adapter
 
@@ -77,7 +77,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>() {
 }
 
 class ViajeAdapter(
-    private val onClick: (Viaje) -> Unit
+    private val onClick: (Viaje, View) -> Unit
 ) : ListAdapter<Viaje, ViajeAdapter.ViewHolder>(DiffCallback) {
 
     class ViewHolder(val binding: ItemViajeBinding) : RecyclerView.ViewHolder(binding.root)
@@ -119,7 +119,9 @@ class ViajeAdapter(
                 tvFecha.visibility = View.GONE
             }
 
-            root.setOnClickListener { onClick(viaje) }
+            // set a unique transition name for shared element transition
+            root.transitionName = "trip_${'$'}{viaje.id}"
+            root.setOnClickListener { onClick(viaje, root) }
         }
     }
 }

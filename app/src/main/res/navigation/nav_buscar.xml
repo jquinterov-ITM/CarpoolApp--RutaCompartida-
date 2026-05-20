@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph_buscar"
+    app:startDestination="@id/buscarFragment">
+
+    <fragment
+        android:id="@+id/buscarFragment"
+        android:name="com.carpoolapp.ui.buscar.BuscarViajeFragment"
+        android:label="Buscar">
+        <action
+            android:id="@+id/action_buscar_to_detalle"
+            app:destination="@id/viajeDetalleFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/viajeDetalleFragment"
+        android:name="com.carpoolapp.ui.detalle.ViajeDetalleFragment"
+        android:label="Detalle del Viaje">
+        <argument
+            android:name="tripId"
+            app:argType="string" />
+        <argument
+            android:name="esConductor"
+            app:argType="boolean"
+            android:defaultValue="false" />
+    </fragment>
+
+</navigation>

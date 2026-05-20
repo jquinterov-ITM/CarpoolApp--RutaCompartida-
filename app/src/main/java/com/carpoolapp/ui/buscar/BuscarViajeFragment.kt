@@ -29,7 +29,7 @@ class BuscarViajeFragment : BaseFragment<FragmentBuscarBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = ViajeAdapter { viaje ->
+        adapter = ViajeAdapter { viaje, _ ->
             findNavController().navigate(
                 BuscarViajeFragmentDirections.actionBuscarToDetalle(
                     tripId = viaje.id,
