@@ -29,20 +29,15 @@ class PublicarViajeFragment : BaseFragment<FragmentPublicarViajeBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Configurar toggle group para selección exclusiva
+        // Dar feedback visual manteniendo la selección exclusiva del grupo
         binding.tipoToggle.addOnButtonCheckedListener { group, checkedId, isChecked ->
-            // Desmarcar todos los botones primero
-            for (i in 0 until group.childCount) {
-                val button = group.getChildAt(i) as? com.google.android.material.button.MaterialButton
-                button?.setBackgroundColor(requireContext().getColor(android.R.color.transparent))
-                button?.setTextColor(requireContext().getColor(com.carpoolapp.R.color.text_primary))
-            }
-            
-            // Marcar solo el botón seleccionado
+            val button = group.findViewById<com.google.android.material.button.MaterialButton>(checkedId)
             if (isChecked) {
-                val button = binding.tipoToggle.findViewById<com.google.android.material.button.MaterialButton>(checkedId)
                 button.setBackgroundColor(requireContext().getColor(com.carpoolapp.R.color.primary))
                 button.setTextColor(requireContext().getColor(com.carpoolapp.R.color.on_primary))
+            } else {
+                button.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                button.setTextColor(requireContext().getColor(com.carpoolapp.R.color.text_primary))
             }
         }
 

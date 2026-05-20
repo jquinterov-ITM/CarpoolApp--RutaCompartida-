@@ -1,0 +1,87 @@
+package com.carpoolapp.data.seed
+
+import com.google.firebase.Timestamp
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class DataSeeder @Inject constructor(
+    private val firestore: FirebaseFirestore
+) {
+    suspend fun seedIfEmpty() {
+        val existing = firestore.collection("trips").limit(1).get().await()
+        if (existing.documents.isNotEmpty()) return // Ya hay datos
+
+        val otherUserId = "demo-conductor-001"
+        val otherUserName = "Carlos Mendoza"
+        val now = Timestamp.now()
+        val hour = 3600L * 1000
+
+        val trips = listOf(
+            mapOf(
+                "conductorId" to otherUserId,
+                "conductorNombre" to otherUserName,
+                "origen" to "Centro",
+                "destino" to "Zona Norte",
+                "fechaHora" to Timestamp(now.seconds + hour * 2, 0),
+                "asientosDisponibles" to 3,
+                "tipo" to "PROGRAMADO",
+                "estado" to "PROGRAMADO",
+                "createdAt" to now
+            ),
+            mapOf(
+                "conductorId" to otherUserId,
+                "conductorNombre" to otherUserName,
+                "origen" to "Plaza Principal",
+                "destino" to "Universidad",
+                "fechaHora" to Timestamp(now.seconds + hour * 1, 0),
+                "asientosDisponibles" to 2,
+                "tipo" to "INMEDIATO",
+                "estado" to "ACTIVO",
+                "createdAt" to now
+            ),
+            mapOf(
+                "conductorId" to "demo-conductor-002",
+                "conductorNombre" to "Ana López",
+                "origen" to "Terminal de Buses",
+                "destino" to "Centro Comercial",
+                "fechaHora" to Timestamp(now.seconds + hour * 3, 0),
+                "asientosDisponibles" to 4,
+                "tipo" to "PROGRAMADO",
+                "estado" to "PROGRAMADO",
+                "createdAt" to now
+            ),
+            mapOf(
+                "conductorId" to "demo-conductor-003",
+                "conductorNombre" to "Pedro Ramírez",
+                "origen" to "Zona Sur",
+                "destino" to "Aeropuerto",
+                "fechaHora" to Timestamp(now.seconds + hour * 4, 0),
+                "asientosDisponibles" to 1,
+                "tipo" to "PROGRAMADO",
+                "estado" to "PROGRAMADO",
+                "createdAt" to now
+            ),
+            mapOf(
+                "conductorId" to otherUserId,
+                "conductorNombre" to otherUserName,
+                "origen" to "Estación Metro",
+                "destino" to "Parque Central",
+                "fechaHora" to Timestamp(now.seconds + hour * 5, 0),
+                "asientosDisponibles" to 2,
+                "tipo" to "INMEDIATO",
+                "estado" to "ACTIVO",
+                "createdAt" to now
+            )
+        )
+
+        val batch = firestore.batch()
+        for (trip in trips) {
+            val ref = firestore.collection("trips").document()
+            batch.set(ref, trip)
+        }
+        batch.commit().await()
+    }
+}

@@ -45,7 +45,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>() {
                         is AuthUiState.EmailEnviado -> {
                             binding.progress.visibility = View.GONE
                             binding.btnEnviarLink.isEnabled = true
-                            binding.mensaje.text = getString(com.carpoolapp.R.string.msg_revisa_email)
+                            binding.mensaje.text = "Redirigiendo…"
                             binding.mensaje.visibility = View.VISIBLE
                         }
                         is AuthUiState.Autenticado -> {

@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import com.carpoolapp.databinding.FragmentBuscarBinding
 import com.carpoolapp.ui.common.BaseFragment
 import com.carpoolapp.ui.home.ViajeAdapter
@@ -28,7 +29,14 @@ class BuscarViajeFragment : BaseFragment<FragmentBuscarBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = ViajeAdapter { }
+        adapter = ViajeAdapter { viaje ->
+            findNavController().navigate(
+                BuscarViajeFragmentDirections.actionBuscarToDetalle(
+                    tripId = viaje.id,
+                    esConductor = false
+                )
+            )
+        }
         binding.rvResultados.adapter = adapter
 
         binding.buscarInput.setOnEditorActionListener { _, actionId, _ ->
@@ -42,8 +50,16 @@ class BuscarViajeFragment : BaseFragment<FragmentBuscarBinding>() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     when (state) {
-                        is BuscarUiState.Resultado -> adapter.submitList(state.viajes)
-                        else -> {}
+                        is BuscarUiState.Loading -> {
+                            binding.progressBuscar.visibility = View.VISIBLE
+                        }
+                        is BuscarUiState.Resultado -> {
+                            binding.progressBuscar.visibility = View.GONE
+                            adapter.submitList(state.viajes)
+                        }
+                        else -> {
+                            binding.progressBuscar.visibility = View.GONE
+                        }
                     }
                 }
             }

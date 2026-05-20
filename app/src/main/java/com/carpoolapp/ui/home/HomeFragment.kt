@@ -52,16 +52,20 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>() {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { state ->
                     when (state) {
+                        is HomeUiState.Loading -> {
+                            binding.progress.visibility = View.VISIBLE
+                        }
                         is HomeUiState.Success -> {
+                            binding.progress.visibility = View.GONE
                             adapter.submitList(state.viajes)
                             binding.tvVacio.visibility =
                                 if (state.viajes.isEmpty()) View.VISIBLE else View.GONE
                         }
                         is HomeUiState.Error -> {
+                            binding.progress.visibility = View.GONE
                             binding.tvVacio.text = state.mensaje
                             binding.tvVacio.visibility = View.VISIBLE
                         }
-                        else -> {}
                     }
                 }
             }

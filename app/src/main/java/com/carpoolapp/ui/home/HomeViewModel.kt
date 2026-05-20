@@ -33,7 +33,11 @@ class HomeViewModel @Inject constructor(
     }
 
     fun cargarFeed() {
-        val usuarioId = auth.currentUser?.uid ?: return
+        val usuarioId = auth.currentUser?.uid
+        if (usuarioId == null) {
+            _uiState.value = HomeUiState.Error("Inicia sesion para ver viajes")
+            return
+        }
         viewModelScope.launch {
             getFeedUseCase(usuarioId)
                 .catch { e ->

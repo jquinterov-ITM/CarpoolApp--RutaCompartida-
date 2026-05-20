@@ -2,7 +2,6 @@ package com.carpoolapp.data.remote.firestore
 
 import com.carpoolapp.data.remote.dto.ViajeDto
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ktx.toObject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -14,13 +13,29 @@ class FirestoreViajeDataSource @Inject constructor(
 ) {
     private val collection get() = firestore.collection("trips")
 
+    private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
+        return try {
+            ViajeDto(
+                id = id,
+                conductorId = data["conductorId"] as? String ?: return null,
+                conductorNombre = data["conductorNombre"] as? String ?: "",
+                origen = data["origen"] as? String ?: "",
+                destino = data["destino"] as? String ?: "",
+                asientosDisponibles = (data["asientosDisponibles"] as? Long)?.toInt() ?: 0,
+                tipo = data["tipo"] as? String ?: "PROGRAMADO",
+                estado = data["estado"] as? String ?: "PROGRAMADO"
+            )
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun getFeed(usuarioId: String): Flow<List<ViajeDto>> = callbackFlow {
         val listener = collection
-            .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(error); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject<ViajeDto>()?.copy(id = doc.id)
+                    documentToDto(doc.id, doc.data ?: emptyMap<String, Any?>())
                 }?.filter { 
                     it.estado != "CANCELADO" && it.conductorId != usuarioId 
                 } ?: emptyList()
@@ -35,7 +50,7 @@ class FirestoreViajeDataSource @Inject constructor(
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(error); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject<ViajeDto>()?.copy(id = doc.id)
+                    documentToDto(doc.id, doc.data ?: emptyMap())
                 }?.filter { 
                     it.estado != "CANCELADO" && 
                     it.conductorId != usuarioId &&
@@ -53,7 +68,7 @@ class FirestoreViajeDataSource @Inject constructor(
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(error); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject<ViajeDto>()?.copy(id = doc.id)
+                    documentToDto(doc.id, doc.data ?: emptyMap())
                 } ?: emptyList()
                 trySend(viajes)
             }
@@ -72,7 +87,7 @@ class FirestoreViajeDataSource @Inject constructor(
             .get()
             .await()
         return trips.documents.mapNotNull { doc ->
-            doc.toObject<ViajeDto>()?.copy(id = doc.id)
+            documentToDto(doc.id, doc.data ?: emptyMap())
         }
     }
 

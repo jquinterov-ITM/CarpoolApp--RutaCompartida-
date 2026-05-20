@@ -15,6 +15,7 @@ import javax.inject.Inject
 
 sealed class BuscarUiState {
     object Idle : BuscarUiState()
+    object Loading : BuscarUiState()
     data class Resultado(val viajes: List<Viaje>) : BuscarUiState()
     data class Error(val mensaje: String) : BuscarUiState()
 }
@@ -34,6 +35,7 @@ class BuscarViajeViewModel @Inject constructor(
             _uiState.value = BuscarUiState.Idle
             return
         }
+        _uiState.value = BuscarUiState.Loading
         viewModelScope.launch {
             buscarViajesUseCase(usuarioId, destino)
                 .catch { e ->
