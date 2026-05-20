@@ -5,6 +5,7 @@ import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.carpoolapp.databinding.ActivityMainBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -13,6 +14,8 @@ import dagger.hilt.android.AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private var appBarConfiguration: AppBarConfiguration? = null
+    private var navControllerRef: androidx.navigation.NavController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,6 +30,18 @@ class MainActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
+        navControllerRef = navController
+
+        // Top-level destinations for bottom navigation so Up behaves correctly
+        appBarConfiguration = AppBarConfiguration(
+            setOf(
+                R.id.homeFragment,
+                R.id.buscarFragment,
+                R.id.misViajesFragment,
+                R.id.perfilFragment
+            )
+        )
+
         binding.bottomNavigation.setupWithNavController(navController)
 
         // Evitar recargar el fragmento al reseleccionar el mismo item
@@ -38,6 +53,15 @@ class MainActivity : AppCompatActivity() {
                 R.id.authFragment -> binding.bottomNavigation.visibility = View.GONE
                 else -> binding.bottomNavigation.visibility = View.VISIBLE
             }
+        }
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        val navController = navControllerRef
+        return if (navController != null && appBarConfiguration != null) {
+            navController.navigateUp(appBarConfiguration!!) || super.onSupportNavigateUp()
+        } else {
+            super.onSupportNavigateUp()
         }
     }
 }
