@@ -10,4 +10,5 @@ interface ViajeRepository {
     suspend fun getViajesComoPasajero(pasajeroId: String): List<Viaje>
     suspend fun crear(viaje: Viaje): String
     suspend fun actualizarEstado(viajeId: String, estado: ViajeEstado)
+    suspend fun seedDemoDataIfNeeded()
 }

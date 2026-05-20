@@ -11,5 +11,12 @@
         <item name="android:colorBackground">@color/background</item>
         <item name="colorOnBackground">@color/on_background</item>
         <item name="colorOnSurface">@color/on_surface</item>
+        <item name="materialCardViewStyle">@style/Widget.CarpoolApp.Card</item>
+    </style>
+
+    <style name="Widget.CarpoolApp.Card" parent="Widget.Material3.CardView.Filled">
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">2dp</item>
+        <item name="strokeWidth">0dp</item>
     </style>
 </resources>

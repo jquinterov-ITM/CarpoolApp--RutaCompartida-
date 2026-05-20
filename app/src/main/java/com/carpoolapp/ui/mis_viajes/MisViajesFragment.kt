@@ -153,8 +153,9 @@ class MisViajesAdapter(
         fun bind(viaje: Viaje) {
             binding.apply {
                 tvConductor.text = viaje.conductorNombre
-                tvRuta.text = "${viaje.origen} → ${viaje.destino}"
-                tvAsientos.text = "${viaje.asientosDisponibles} asientos"
+                tvOrigen.text = viaje.origen
+                tvDestino.text = viaje.destino
+                tvAsientos.text = "${viaje.asientosDisponibles} asientos disponibles"
                 tvEstado.text = viaje.estado.name
                 tvEstado.setTextColor(
                     when (viaje.estado) {
@@ -168,6 +169,12 @@ class MisViajesAdapter(
                             root.context.getColor(R.color.estado_cancelado)
                     }
                 )
+                if (viaje.fechaHora > 0) {
+                    val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())
+                    tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))
+                } else {
+                    tvFecha.visibility = View.GONE
+                }
                 root.setOnClickListener { onClick(viaje) }
             }
         }

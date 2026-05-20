@@ -39,4 +39,8 @@ class ViajeRepositoryImpl @Inject constructor(
     override suspend fun actualizarEstado(viajeId: String, estado: ViajeEstado) {
         dataSource.actualizarEstado(viajeId, estado.name)
     }
+
+    override suspend fun seedDemoDataIfNeeded() {
+        dataSource.seedDemoDataIfNeeded()
+    }
 }

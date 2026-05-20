@@ -55,6 +55,10 @@ class PerfilFragment : BaseFragment<FragmentPerfilBinding>() {
                     when (state) {
                         is PerfilUiState.Success -> {
                             val u = state.usuario
+                            val initials = u.nombre.split(" ")
+                                .joinToString("") { it.take(1).uppercase() }
+                                .take(2)
+                            binding.avatar.text = initials.ifEmpty { "?" }
                             binding.tvNombre.text = u.nombre
                             binding.tvEmail.text = u.email
                             binding.vehiculoInput.setText(u.vehiculo ?: "")

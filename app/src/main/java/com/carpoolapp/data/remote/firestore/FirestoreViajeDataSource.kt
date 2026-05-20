@@ -13,7 +13,7 @@ class FirestoreViajeDataSource @Inject constructor(
 ) {
     private val collection get() = firestore.collection("trips")
 
-    private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
+private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
         return try {
             ViajeDto(
                 id = id,
@@ -21,9 +21,11 @@ class FirestoreViajeDataSource @Inject constructor(
                 conductorNombre = data["conductorNombre"] as? String ?: "",
                 origen = data["origen"] as? String ?: "",
                 destino = data["destino"] as? String ?: "",
+                fechaHora = data["fechaHora"] as? com.google.firebase.Timestamp ?: com.google.firebase.Timestamp.now(),
                 asientosDisponibles = (data["asientosDisponibles"] as? Long)?.toInt() ?: 0,
                 tipo = data["tipo"] as? String ?: "PROGRAMADO",
-                estado = data["estado"] as? String ?: "PROGRAMADO"
+                estado = data["estado"] as? String ?: "PROGRAMADO",
+                createdAt = data["createdAt"] as? com.google.firebase.Timestamp ?: com.google.firebase.Timestamp.now()
             )
         } catch (e: Exception) {
             null
@@ -98,5 +100,73 @@ class FirestoreViajeDataSource @Inject constructor(
 
     suspend fun actualizarEstado(id: String, estado: String) {
         collection.document(id).update("estado", estado).await()
+    }
+
+    suspend fun seedDemoDataIfNeeded() {
+        val count = collection.limit(1).get().await().size()
+        if (count > 0) return
+
+        val now = System.currentTimeMillis()
+        val demoTrips = listOf(
+            mapOf(
+                "conductorId" to "demo_driver_1",
+                "conductorNombre" to "Carlos Mendoza",
+                "origen" to "Centro, Ciudad de Mexico",
+                "destino" to "Politecnico, Ciudad de Mexico",
+                "fechaHora" to com.google.firebase.Timestamp.now(),
+                "asientosDisponibles" to 3,
+                "tipo" to "PROGRAMADO",
+                "estado" to "PROGRAMADO",
+                "createdAt" to com.google.firebase.Timestamp.now()
+            ),
+            mapOf(
+                "conductorId" to "demo_driver_2",
+                "conductorNombre" to "Ana Lopez",
+                "origen" to "Condesa, Ciudad de Mexico",
+                "destino" to "Santa Fe, Ciudad de Mexico",
+                "fechaHora" to com.google.firebase.Timestamp.now(),
+                "asientosDisponibles" to 2,
+                "tipo" to "PROGRAMADO",
+                "estado" to "PROGRAMADO",
+                "createdAt" to com.google.firebase.Timestamp.now()
+            ),
+            mapOf(
+                "conductorId" to "demo_driver_3",
+                "conductorNombre" to "Pedro Ramirez",
+                "origen" to "Coyoacan, Ciudad de Mexico",
+                "destino" to "Centro Historico, Ciudad de Mexico",
+                "fechaHora" to com.google.firebase.Timestamp.now(),
+                "asientosDisponibles" to 4,
+                "tipo" to "PROGRAMADO",
+                "estado" to "PROGRAMADO",
+                "createdAt" to com.google.firebase.Timestamp.now()
+            ),
+            mapOf(
+                "conductorId" to "demo_driver_4",
+                "conductorNombre" to "Maria Garcia",
+                "origen" to "Roma, Ciudad de Mexico",
+                "destino" to "Insurgentes, Ciudad de Mexico",
+                "fechaHora" to com.google.firebase.Timestamp.now(),
+                "asientosDisponibles" to 1,
+                "tipo" to "PROGRAMADO",
+                "estado" to "PROGRAMADO",
+                "createdAt" to com.google.firebase.Timestamp.now()
+            ),
+            mapOf(
+                "conductorId" to "demo_driver_5",
+                "conductorNombre" to "Luis Hernandez",
+                "origen" to "Del Valle, Ciudad de Mexico",
+                "destino" to "Naucalpan, Estado de Mexico",
+                "fechaHora" to com.google.firebase.Timestamp.now(),
+                "asientosDisponibles" to 2,
+                "tipo" to "PROGRAMADO",
+                "estado" to "PROGRAMADO",
+                "createdAt" to com.google.firebase.Timestamp.now()
+            )
+        )
+
+        demoTrips.forEach { trip ->
+            collection.add(trip).await()
+        }
     }
 }

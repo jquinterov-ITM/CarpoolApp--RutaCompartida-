@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -58,13 +59,15 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>() {
                         is HomeUiState.Success -> {
                             binding.progress.visibility = View.GONE
                             adapter.submitList(state.viajes)
-                            binding.tvVacio.visibility =
-                                if (state.viajes.isEmpty()) View.VISIBLE else View.GONE
+                            val empty = state.viajes.isEmpty()
+                            binding.tvVacio.visibility = if (empty) View.VISIBLE else View.GONE
+                            binding.tvVacioIcon.visibility = if (empty) View.VISIBLE else View.GONE
                         }
                         is HomeUiState.Error -> {
                             binding.progress.visibility = View.GONE
                             binding.tvVacio.text = state.mensaje
                             binding.tvVacio.visibility = View.VISIBLE
+                            binding.tvVacioIcon.visibility = View.VISIBLE
                         }
                     }
                 }
@@ -95,21 +98,27 @@ class ViajeAdapter(
         val viaje = getItem(position)
         holder.binding.apply {
             tvConductor.text = viaje.conductorNombre
-            tvRuta.text = "${viaje.origen} → ${viaje.destino}"
-            tvAsientos.text = "${viaje.asientosDisponibles} asientos"
+            tvOrigen.text = viaje.origen
+            tvDestino.text = viaje.destino
+            tvAsientos.text = "${viaje.asientosDisponibles} asientos disponibles"
             tvEstado.text = viaje.estado.name
-            tvEstado.setTextColor(
-                when (viaje.estado) {
-                    com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO ->
-                        root.context.getColor(com.carpoolapp.R.color.estado_programado)
-                    com.carpoolapp.domain.model.ViajeEstado.ACTIVO ->
-                        root.context.getColor(com.carpoolapp.R.color.estado_activo)
-                    com.carpoolapp.domain.model.ViajeEstado.COMPLETADO ->
-                        root.context.getColor(com.carpoolapp.R.color.estado_completado)
-                    com.carpoolapp.domain.model.ViajeEstado.CANCELADO ->
-                        root.context.getColor(com.carpoolapp.R.color.estado_cancelado)
-                }
-            )
+
+            val estadoColor = when (viaje.estado) {
+                com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> com.carpoolapp.R.color.estado_programado
+                com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> com.carpoolapp.R.color.estado_activo
+                com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> com.carpoolapp.R.color.estado_completado
+                com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> com.carpoolapp.R.color.estado_cancelado
+            }
+            tvEstado.setTextColor(ContextCompat.getColor(root.context, estadoColor))
+            tvEstado.background.setTint(ContextCompat.getColor(root.context, estadoColor))
+
+            if (viaje.fechaHora > 0) {
+                val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())
+                tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))
+            } else {
+                tvFecha.visibility = View.GONE
+            }
+
             root.setOnClickListener { onClick(viaje) }
         }
     }

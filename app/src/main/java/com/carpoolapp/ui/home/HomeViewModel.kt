@@ -3,6 +3,7 @@ package com.carpoolapp.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carpoolapp.domain.model.Viaje
+import com.carpoolapp.domain.repository.ViajeRepository
 import com.carpoolapp.domain.usecase.GetFeedUseCase
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -22,6 +23,7 @@ sealed class HomeUiState {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getFeedUseCase: GetFeedUseCase,
+    private val viajeRepository: ViajeRepository,
     private val auth: FirebaseAuth
 ) : ViewModel() {
 
@@ -29,7 +31,10 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        cargarFeed()
+        viewModelScope.launch {
+            viajeRepository.seedDemoDataIfNeeded()
+            cargarFeed()
+        }
     }
 
     fun cargarFeed() {

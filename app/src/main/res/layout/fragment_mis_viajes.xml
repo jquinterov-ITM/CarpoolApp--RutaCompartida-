@@ -31,7 +31,7 @@
         android:id="@+id/tv_mis_viajes_vacio"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Publica tu primer viaje con el boton +"
+        android:text="@string/msg_mis_viajes_vacio"
         android:textColor="@color/text_secondary"
         android:textSize="16sp"
         android:visibility="gone"

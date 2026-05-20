@@ -52,13 +52,16 @@ class BuscarViajeFragment : BaseFragment<FragmentBuscarBinding>() {
                     when (state) {
                         is BuscarUiState.Loading -> {
                             binding.progressBuscar.visibility = View.VISIBLE
+                            binding.tvSinResultados.visibility = View.GONE
                         }
                         is BuscarUiState.Resultado -> {
                             binding.progressBuscar.visibility = View.GONE
                             adapter.submitList(state.viajes)
+                            binding.tvSinResultados.visibility = if (state.viajes.isEmpty()) View.VISIBLE else View.GONE
                         }
                         else -> {
                             binding.progressBuscar.visibility = View.GONE
+                            binding.tvSinResultados.visibility = View.GONE
                         }
                     }
                 }

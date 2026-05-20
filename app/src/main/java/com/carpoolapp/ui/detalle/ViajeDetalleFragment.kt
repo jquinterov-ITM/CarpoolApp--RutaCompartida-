@@ -39,13 +39,26 @@ class ViajeDetalleFragment : BaseFragment<FragmentViajeDetalleBinding>() {
                     when (state) {
                         is DetalleUiState.Success -> {
                             val viaje = state.viaje
+                            val initials = viaje.conductorNombre.split(" ")
+                                .joinToString("") { it.take(1).uppercase() }
+                                .take(2)
+                            binding.ivAvatar.text = initials.ifEmpty { "?" }
                             binding.tvConductor.text = viaje.conductorNombre
-                            binding.tvRuta.text = "${viaje.origen} → ${viaje.destino}"
+                            binding.tvOrigen.text = viaje.origen
+                            binding.tvDestino.text = viaje.destino
                             binding.tvFecha.text = SimpleDateFormat(
-                                "dd/MM/yyyy HH:mm", Locale.getDefault()
+                                "EEE, d MMM 'a las' h:mm a", Locale.getDefault()
                             ).format(Date(viaje.fechaHora))
                             binding.tvAsientos.text = "${viaje.asientosDisponibles} asientos disponibles"
                             binding.tvEstado.text = viaje.estado.name
+                            val estadoColor = when (viaje.estado) {
+                                com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> com.carpoolapp.R.color.estado_programado
+                                com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> com.carpoolapp.R.color.estado_activo
+                                com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> com.carpoolapp.R.color.estado_completado
+                                com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> com.carpoolapp.R.color.estado_cancelado
+                            }
+                            binding.tvEstado.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), estadoColor))
+                            binding.tvEstado.background.setTint(androidx.core.content.ContextCompat.getColor(requireContext(), estadoColor))
                             binding.btnSolicitar.visibility = View.VISIBLE
                         }
                         is DetalleUiState.EnviandoSolicitud -> {
