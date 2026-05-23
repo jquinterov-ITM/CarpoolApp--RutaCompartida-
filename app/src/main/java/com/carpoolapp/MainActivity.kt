@@ -39,9 +39,13 @@ class MainActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_SECURE
         )
 
+        // Check for OAuth success flag
+        val oauthSuccess = intent.getBooleanExtra("oauth_success", false)
+        
         // Check if user is authenticated
-        val isAuthenticated = firebaseAuth.currentUser != null
+        val isAuthenticated = firebaseAuth.currentUser != null || oauthSuccess
         val useTabNavigation = isAuthenticated
+
 
         // Map bottom menu item -> navigation graph resource
         val navGraphMap = if (useTabNavigation) mapOf(
@@ -142,13 +146,6 @@ class MainActivity : AppCompatActivity() {
             val authNavHost = fragmentManager.findFragmentByTag("navHost_auth") as? NavHostFragment
             if (authNavHost != null) {
                 navControllerRef = authNavHost.navController
-                // Listen for auth success to transition to tab nav
-                authNavHost.navController.addOnDestinationChangedListener { _: NavController, destination: NavDestination, _: Bundle? ->
-                    if (destination.id == R.id.homeFragment) {
-                        // User authenticated, switch to tab navigation
-                        recreate()
-                    }
-                }
             }
         }
     }

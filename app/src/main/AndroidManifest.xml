@@ -36,6 +36,21 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".DeepLinkActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <!-- Clerk OAuth callback -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="carpoolapp"
+                    android:host="oauth-callback" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".notifications.CarpoolFirebaseMessagingService"
             android:exported="false">

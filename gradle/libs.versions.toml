@@ -4,6 +4,7 @@ kotlin = "2.1.0"
 ksp = "2.1.0-1.0.29"
 
 firebase-bom = "33.10.0"
+chrome-custom-tabs = "1.7.0"
 room = "2.6.1"
 hilt = "2.53.1"
 navigation = "2.8.7"
@@ -24,6 +25,9 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore-ktx" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth-ktx" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging-ktx" }
+
+# Custom Tabs
+chrome-custom-tabs = { group = "androidx.browser", name = "browser", version.ref = "chrome-custom-tabs" }
 
 # Room
 room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }

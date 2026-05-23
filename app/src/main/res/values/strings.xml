@@ -34,4 +34,8 @@
     <string name="msg_revisa_email">Revisa tu correo para el link de acceso</string>
     <string name="msg_sesion_iniciada">Sesión iniciada</string>
     <string name="msg_cerrar_sesion">Cerrar sesión</string>
+    <string name="welcome_to_carpool">Bienvenido a CarpoolApp</string>
+    <string name="sign_in_to_continue">Inicia sesión para continuar</string>
+    <string name="sign_in">Iniciar Sesión</string>
+    <string name="sign_up">Crear Cuenta</string>
 </resources>
