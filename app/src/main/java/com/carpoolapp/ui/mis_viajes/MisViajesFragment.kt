@@ -157,18 +157,25 @@ class MisViajesAdapter(
                 tvDestino.text = viaje.destino
                 tvAsientos.text = "${viaje.asientosDisponibles} asientos disponibles"
                 tvEstado.text = viaje.estado.name
-                tvEstado.setTextColor(
-                    when (viaje.estado) {
-                        com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO ->
-                            root.context.getColor(R.color.estado_programado)
-                        com.carpoolapp.domain.model.ViajeEstado.ACTIVO ->
-                            root.context.getColor(R.color.estado_activo)
-                        com.carpoolapp.domain.model.ViajeEstado.COMPLETADO ->
-                            root.context.getColor(R.color.estado_completado)
-                        com.carpoolapp.domain.model.ViajeEstado.CANCELADO ->
-                            root.context.getColor(R.color.estado_cancelado)
+                
+                val (textColor, bgColorRes) = when (viaje.estado) {
+                    com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> {
+                        root.context.getColor(R.color.estado_programado) to R.drawable.bg_estado_programado
                     }
-                )
+                    com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> {
+                        root.context.getColor(R.color.estado_activo) to R.drawable.bg_estado_activo
+                    }
+                    com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> {
+                        root.context.getColor(R.color.estado_completado) to R.drawable.bg_estado_completado
+                    }
+                    com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> {
+                        root.context.getColor(R.color.estado_cancelado) to R.drawable.bg_estado_cancelado
+                    }
+                }
+                
+                tvEstado.setTextColor(textColor)
+                flEstadoContainer.setBackgroundResource(bgColorRes)
+                
                 if (viaje.fechaHora > 0) {
                     val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())
                     tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))

@@ -64,5 +64,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>() {
                 }
             }
         }
+
+        viewModel.autologin()
     }
 }

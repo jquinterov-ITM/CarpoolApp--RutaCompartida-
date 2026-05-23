@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed class HomeUiState {
-    object Loading : HomeUiState()
+    data object Loading : HomeUiState()
     data class Success(val viajes: List<Viaje>) : HomeUiState()
     data class Error(val mensaje: String) : HomeUiState()
 }

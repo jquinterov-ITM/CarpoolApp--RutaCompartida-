@@ -103,14 +103,22 @@ class ViajeAdapter(
             tvAsientos.text = "${viaje.asientosDisponibles} asientos disponibles"
             tvEstado.text = viaje.estado.name
 
-            val estadoColor = when (viaje.estado) {
-                com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> com.carpoolapp.R.color.estado_programado
-                com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> com.carpoolapp.R.color.estado_activo
-                com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> com.carpoolapp.R.color.estado_completado
-                com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> com.carpoolapp.R.color.estado_cancelado
+            val (textColor, bgColorRes) = when (viaje.estado) {
+                com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> {
+                    root.context.getColor(com.carpoolapp.R.color.estado_programado) to com.carpoolapp.R.drawable.bg_estado_programado
+                }
+                com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> {
+                    root.context.getColor(com.carpoolapp.R.color.estado_activo) to com.carpoolapp.R.drawable.bg_estado_activo
+                }
+                com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> {
+                    root.context.getColor(com.carpoolapp.R.color.estado_completado) to com.carpoolapp.R.drawable.bg_estado_completado
+                }
+                com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> {
+                    root.context.getColor(com.carpoolapp.R.color.estado_cancelado) to com.carpoolapp.R.drawable.bg_estado_cancelado
+                }
             }
-            tvEstado.setTextColor(ContextCompat.getColor(root.context, estadoColor))
-            tvEstado.background.setTint(ContextCompat.getColor(root.context, estadoColor))
+            tvEstado.setTextColor(textColor)
+            flEstadoContainer.setBackgroundResource(bgColorRes)
 
             if (viaje.fechaHora > 0) {
                 val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())

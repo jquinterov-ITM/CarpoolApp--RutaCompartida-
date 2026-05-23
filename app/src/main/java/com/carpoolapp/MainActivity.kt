@@ -1,18 +1,26 @@
 package com.carpoolapp
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import com.carpoolapp.databinding.ActivityMainBinding
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    @Inject
+    lateinit var firebaseAuth: FirebaseAuth
 
     private lateinit var binding: ActivityMainBinding
     private var appBarConfiguration: AppBarConfiguration? = null
@@ -31,80 +39,118 @@ class MainActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_SECURE
         )
 
+        // Check if user is authenticated
+        val isAuthenticated = firebaseAuth.currentUser != null
+        val useTabNavigation = isAuthenticated
+
         // Map bottom menu item -> navigation graph resource
-        val navGraphMap = mapOf(
+        val navGraphMap = if (useTabNavigation) mapOf(
             R.id.homeFragment to R.navigation.nav_home,
             R.id.buscarFragment to R.navigation.nav_buscar,
             R.id.misViajesFragment to R.navigation.nav_mis_viajes,
             R.id.perfilFragment to R.navigation.nav_perfil
-        )
+        ) else emptyMap()
 
         // Create NavHostFragments for each tab and attach them (hidden by default)
         val fragmentManager = supportFragmentManager
         val containerId = R.id.nav_host_fragment
         val navHostTags = mutableMapOf<Int, String>()
-        navGraphMap.forEach { (menuId, graphRes) ->
-            val tag = "navHost_\${menuId}"
-            navHostTags[menuId] = tag
-            var navHost = fragmentManager.findFragmentByTag(tag) as? NavHostFragment
-            if (navHost == null) {
-                navHost = NavHostFragment.create(graphRes)
+        
+        if (useTabNavigation) {
+            navGraphMap.forEach { (menuId, graphRes) ->
+                val tag = "navHost_\${menuId}"
+                navHostTags[menuId] = tag
+                var navHost = fragmentManager.findFragmentByTag(tag) as? NavHostFragment
+                if (navHost == null) {
+                    navHost = NavHostFragment.create(graphRes)
+                    fragmentManager.beginTransaction()
+                        .add(containerId, navHost, tag)
+                        .hide(navHost)
+                        .commitNow()
+                }
+            }
+        } else {
+            // Show auth graph instead
+            var authNavHost = fragmentManager.findFragmentByTag("navHost_auth") as? NavHostFragment
+            if (authNavHost == null) {
+                authNavHost = NavHostFragment.create(R.navigation.nav_graph)
                 fragmentManager.beginTransaction()
-                    .add(containerId, navHost, tag)
-                    .hide(navHost)
+                    .add(containerId, authNavHost, "navHost_auth")
                     .commitNow()
             }
         }
 
         // Keep track of current selected menu id (persist across rotations)
-        currentItemIdField = savedInstanceState?.getInt("currentItemId")
-            ?: binding.bottomNavigation.selectedItemId.takeIf { it != View.NO_ID }
-            ?: R.id.homeFragment
+        currentItemIdField = if (useTabNavigation) {
+            savedInstanceState?.getInt("currentItemId")
+                ?: binding.bottomNavigation.selectedItemId.takeIf { it != View.NO_ID }
+                ?: R.id.homeFragment
+        } else {
+            R.id.authFragment
+        }
 
-        // expose navHostTags map to rest of class
+        // Expose navHostTags map to rest of class
         navHostTagMap = navHostTags
 
-        // Show initial tab
-        fun showTab(menuId: Int) {
-            val tagToShow = navHostTags[menuId] ?: return
-            fragmentManager.fragments.forEach { f ->
-                val t = f.tag
-                val transaction = fragmentManager.beginTransaction()
-                if (t == tagToShow) transaction.show(f) else transaction.hide(f)
-                transaction.commitNow()
+        if (useTabNavigation) {
+            // Tab-based navigation setup
+            val listenerMap = mutableMapOf<Int, NavController.OnDestinationChangedListener>()
+
+            fun showTab(menuId: Int) {
+                val tagToShow = navHostTags[menuId] ?: return
+                fragmentManager.fragments.forEach { f ->
+                    val t = f.tag
+                    val transaction = fragmentManager.beginTransaction()
+                    if (t == tagToShow) transaction.show(f) else transaction.hide(f)
+                    transaction.commitNow()
+                }
+                currentItemIdField = menuId
+                val navHost = fragmentManager.findFragmentByTag(tagToShow) as NavHostFragment
+                navControllerRef = navHost.navController
+                
+                if (!listenerMap.containsKey(menuId)) {
+                    val listener = NavController.OnDestinationChangedListener { _: NavController, destination: NavDestination, _: Bundle? ->
+                        binding.bottomNavigation.visibility = if (destination.id == R.id.authFragment) View.GONE else View.VISIBLE
+                    }
+                    listenerMap[menuId] = listener
+                    navHost.navController.addOnDestinationChangedListener(listener)
+                }
             }
-            // update selection
-            currentItemIdField = menuId
-            val navHost = fragmentManager.findFragmentByTag(tagToShow) as NavHostFragment
-            navControllerRef = navHost.navController
-            // attach destination listener to show/hide bottom nav for auth screens
-            navHost.navController.addOnDestinationChangedListener { _, destination, _ ->
-                binding.bottomNavigation.visibility = if (destination.id == R.id.authFragment) View.GONE else View.VISIBLE
+
+            // Initial display
+            showTab(currentItemIdField)
+
+            binding.bottomNavigation.setOnItemSelectedListener { item: MenuItem ->
+                val itemId = item.itemId
+                if (itemId == currentItemIdField) {
+                    val currentTag = navHostTags[itemId] ?: return@setOnItemSelectedListener true
+                    val nav = fragmentManager.findFragmentByTag(currentTag) as NavHostFragment
+                    nav.navController.popBackStack(nav.navController.graph.startDestinationId, false)
+                    return@setOnItemSelectedListener true
+                }
+                if (currentItemIdField != View.NO_ID) {
+                    tabBackStack.addLast(currentItemIdField)
+                }
+                showTab(itemId)
+                true
+            }
+
+            binding.bottomNavigation.setOnItemReselectedListener { /* no-op */ }
+        } else {
+            // Auth flow: hide bottom navigation, use main nav graph
+            binding.bottomNavigation.visibility = View.GONE
+            val authNavHost = fragmentManager.findFragmentByTag("navHost_auth") as? NavHostFragment
+            if (authNavHost != null) {
+                navControllerRef = authNavHost.navController
+                // Listen for auth success to transition to tab nav
+                authNavHost.navController.addOnDestinationChangedListener { _: NavController, destination: NavDestination, _: Bundle? ->
+                    if (destination.id == R.id.homeFragment) {
+                        // User authenticated, switch to tab navigation
+                        recreate()
+                    }
+                }
             }
         }
-
-        // Initial display
-        showTab(currentItemIdField)
-
-        binding.bottomNavigation.setOnItemSelectedListener { item ->
-            val id = item.itemId
-            if (id == currentItemIdField) {
-                // already selected, pop to start if possible
-                val currentTag = navHostTags[id] ?: return@setOnItemSelectedListener true
-                val nav = fragmentManager.findFragmentByTag(currentTag) as NavHostFragment
-                nav.navController.popBackStack(nav.navController.graph.startDestinationId, false)
-                return@setOnItemSelectedListener true
-            }
-            // push current to tab back stack before switching
-            if (currentItemIdField != View.NO_ID) {
-                tabBackStack.addLast(currentItemIdField)
-            }
-            showTab(id)
-            true
-        }
-
-        // No-op on reselection
-        binding.bottomNavigation.setOnItemReselectedListener { /* no-op */ }
     }
 
     override fun onSupportNavigateUp(): Boolean {

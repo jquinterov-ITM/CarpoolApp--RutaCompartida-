@@ -23,6 +23,10 @@
     <color name="estado_completado">#FF5F6368</color>
     <color name="estado_cancelado">#FFD93025</color>
     <color name="estado_pendiente">#FFFBBC04</color>
+    <color name="estado_programado_dark">#FF0D47A1</color>
+    <color name="estado_activo_dark">#FF1B5E20</color>
+    <color name="estado_completado_dark">#FF37474F</color>
+    <color name="estado_cancelado_dark">#FFC62828</color>
     <color name="route_line">#FFEA4335</color>
     <color name="seat_available">#FF34A853</color>
     <color name="seat_unavailable">#FFD93025</color>
