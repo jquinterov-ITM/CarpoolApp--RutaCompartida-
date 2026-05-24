@@ -35,7 +35,7 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     fun getFeed(usuarioId: String): Flow<List<ViajeDto>> = callbackFlow {
         val listener = collection
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) { close(); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap<String, Any?>())
                 }?.filter { 
@@ -50,7 +50,7 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
         val listener = collection
             .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) { close(); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap())
                 }?.filter { 
@@ -68,7 +68,7 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
             .whereEqualTo("conductorId", conductorId)
             .orderBy("fechaHora", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) { close(); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap())
                 } ?: emptyList()

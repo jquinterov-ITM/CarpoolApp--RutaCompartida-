@@ -17,7 +17,7 @@ class FirestoreUsuarioDataSource @Inject constructor(
     fun getUsuario(userId: String): Flow<UsuarioDto?> = callbackFlow {
         val listener = collection.document(userId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) { close(); return@addSnapshotListener }
                 val usuario = snapshot?.toObject<UsuarioDto>()?.copy(id = snapshot.id)
                 trySend(usuario)
             }

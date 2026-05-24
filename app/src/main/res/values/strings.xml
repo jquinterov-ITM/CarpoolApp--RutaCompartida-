@@ -21,6 +21,8 @@
     <string name="label_conductor">Conductor</string>
     <string name="label_estado">Estado</string>
     <string name="label_email">Correo electrónico</string>
+    <string name="label_password">Contraseña</string>
+    <string name="google_web_client_id">658053612578-babrveqmqo0qggt4hpr5vnif6h8m2t5j.apps.googleusercontent.com</string>
     <string name="label_vehiculo">Vehículo</string>
     <string name="msg_cargando">Cargando…</string>
     <string name="msg_sin_viajes">No hay viajes disponibles</string>

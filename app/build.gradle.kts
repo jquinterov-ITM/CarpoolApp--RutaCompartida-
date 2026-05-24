@@ -55,6 +55,9 @@ dependencies {
     // Custom Tabs for OAuth
     implementation(libs.chrome.custom.tabs)
 
+    // Google Sign-In
+    implementation(libs.play.services.auth)
+
     // Firebase BOM
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)

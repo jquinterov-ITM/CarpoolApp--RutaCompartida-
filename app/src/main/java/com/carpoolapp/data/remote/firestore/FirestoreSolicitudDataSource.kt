@@ -18,7 +18,7 @@ class FirestoreSolicitudDataSource @Inject constructor(
     fun getSolicitudesPorViaje(tripId: String): Flow<List<SolicitudDto>> = callbackFlow {
         val listener = requestsCollection(tripId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) { close(); return@addSnapshotListener }
                 val solicitudes = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject<SolicitudDto>()?.copy(id = doc.id)
                 } ?: emptyList()
