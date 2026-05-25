@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "trips",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "conductorId", "order": "ASCENDING" },
+        { "fieldPath": "fechaHora", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
