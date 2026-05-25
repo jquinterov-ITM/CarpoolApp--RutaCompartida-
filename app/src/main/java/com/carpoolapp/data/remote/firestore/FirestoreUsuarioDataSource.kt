@@ -25,14 +25,20 @@ class FirestoreUsuarioDataSource @Inject constructor(
     }
 
     suspend fun guardar(dto: UsuarioDto) {
-        collection.document(dto.id).set(dto).await()
+        firestoreSafe("FirestoreUsuarioDS", Unit) {
+            collection.document(dto.id).set(dto).await()
+        }
     }
 
     suspend fun actualizarVehiculo(userId: String, vehiculo: String) {
-        collection.document(userId).update("vehiculo", vehiculo).await()
+        firestoreSafe("FirestoreUsuarioDS", Unit) {
+            collection.document(userId).update("vehiculo", vehiculo).await()
+        }
     }
 
     suspend fun actualizarFcmToken(userId: String, token: String) {
-        collection.document(userId).update("fcmToken", token).await()
+        firestoreSafe("FirestoreUsuarioDS", Unit) {
+            collection.document(userId).update("fcmToken", token).await()
+        }
     }
 }

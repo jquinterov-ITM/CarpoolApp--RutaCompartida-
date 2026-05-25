@@ -84,33 +84,48 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     suspend fun getViajesPorPasajero(pasajeroId: String): List<ViajeDto> {
-        val requests = firestore.collectionGroup("requests")
-            .whereEqualTo("pasajeroId", pasajeroId)
-            .get()
-            .await()
-        val tripIds = requests.documents.mapNotNull { it.reference.parent.parent?.id }
-        if (tripIds.isEmpty()) return emptyList()
-        val trips = collection
-            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), tripIds)
-            .get()
-            .await()
-        return trips.documents.mapNotNull { doc ->
-            documentToDto(doc.id, doc.data ?: emptyMap())
+        val result: List<ViajeDto> = firestoreSafe("FirestoreViajeDS", emptyList()) {
+            val requests = firestore.collectionGroup("requests")
+                .whereEqualTo("pasajeroId", pasajeroId)
+                .get()
+                .await()
+            val tripIds = requests.documents.mapNotNull { it.reference.parent.parent?.id }
+            if (tripIds.isEmpty()) return@firestoreSafe emptyList()
+            val trips = collection
+                .whereIn(com.google.firebase.firestore.FieldPath.documentId(), tripIds)
+                .get()
+                .await()
+            trips.documents.mapNotNull { doc ->
+                documentToDto(doc.id, doc.data ?: emptyMap())
+            }
         }
+        return result
     }
 
     suspend fun crear(dto: ViajeDto): String {
-        val ref = collection.add(dto).await()
-        return ref.id
+        return try {
+            val ref = collection.add(dto).await()
+            ref.id
+        } catch (e: Exception) {
+            Log.w("FirestoreViajeDS", "Error creando viaje", e)
+            ""
+        }
     }
 
     suspend fun actualizarEstado(id: String, estado: String) {
-        collection.document(id).update("estado", estado).await()
+        try {
+            collection.document(id).update("estado", estado).await()
+        } catch (e: Exception) {
+            Log.w("FirestoreViajeDS", "Error actualizando estado para $id", e)
+        }
     }
 
     suspend fun seedDemoDataIfNeeded() {
-        val count = collection.limit(1).get().await().size()
-        if (count > 0) return
+        val existingCount: Int = firestoreSafe("FirestoreViajeDS", -1) {
+            collection.limit(1).get().await().size()
+        }
+        if (existingCount > 0) return
+        if (existingCount < 0) return
 
         val now = System.currentTimeMillis()
         val demoTrips = listOf(
@@ -172,7 +187,11 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
         )
 
         demoTrips.forEach { trip ->
-            collection.add(trip).await()
+            try {
+                collection.add(trip).await()
+            } catch (e: Exception) {
+                Log.w("FirestoreViajeDS", "Error agregando demo trip", e)
+            }
         }
     }
 }
