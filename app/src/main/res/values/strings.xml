@@ -29,6 +29,7 @@
     <string name="msg_sin_resultados">No se encontraron viajes con ese destino</string>
     <string name="msg_mis_viajes_vacio">Aún no tienes viajes. ¡Publica uno o únete a un viaje!</string>
     <string name="msg_error_red">Error de conexión. Intenta de nuevo.</string>
+        <string name="msg_fecha_desconocida">Fecha desconocida</string>
     <string name="msg_solicitud_enviada">Solicitud enviada</string>
     <string name="msg_solicitud_aceptada">¡Solicitud aceptada!</string>
     <string name="msg_solicitud_rechazada">Solicitud rechazada</string>

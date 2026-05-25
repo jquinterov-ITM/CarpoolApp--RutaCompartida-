@@ -160,16 +160,16 @@ class MisViajesAdapter(
                 
                 val (textColor, bgColorRes) = when (viaje.estado) {
                     com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> {
-                        root.context.getColor(R.color.estado_programado) to R.drawable.bg_estado_programado
+                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_programado
                     }
                     com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> {
-                        root.context.getColor(R.color.estado_activo) to R.drawable.bg_estado_activo
+                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_activo
                     }
                     com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> {
-                        root.context.getColor(R.color.estado_completado) to R.drawable.bg_estado_completado
+                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_completado
                     }
                     com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> {
-                        root.context.getColor(R.color.estado_cancelado) to R.drawable.bg_estado_cancelado
+                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_cancelado
                     }
                 }
                 
@@ -180,7 +180,8 @@ class MisViajesAdapter(
                     val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())
                     tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))
                 } else {
-                    tvFecha.visibility = View.GONE
+                    tvFecha.text = root.context.getString(com.carpoolapp.R.string.msg_fecha_desconocida)
+                    tvFecha.visibility = View.VISIBLE
                 }
                 root.setOnClickListener { onClick(viaje) }
             }

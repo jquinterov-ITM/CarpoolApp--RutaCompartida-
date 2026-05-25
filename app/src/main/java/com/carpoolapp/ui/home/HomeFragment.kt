@@ -105,16 +105,16 @@ class ViajeAdapter(
 
             val (textColor, bgColorRes) = when (viaje.estado) {
                 com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> {
-                    root.context.getColor(com.carpoolapp.R.color.estado_programado) to com.carpoolapp.R.drawable.bg_estado_programado
+                    root.context.getColor(com.carpoolapp.R.color.on_primary) to com.carpoolapp.R.drawable.bg_estado_programado
                 }
                 com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> {
-                    root.context.getColor(com.carpoolapp.R.color.estado_activo) to com.carpoolapp.R.drawable.bg_estado_activo
+                    root.context.getColor(com.carpoolapp.R.color.on_primary) to com.carpoolapp.R.drawable.bg_estado_activo
                 }
                 com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> {
-                    root.context.getColor(com.carpoolapp.R.color.estado_completado) to com.carpoolapp.R.drawable.bg_estado_completado
+                    root.context.getColor(com.carpoolapp.R.color.on_primary) to com.carpoolapp.R.drawable.bg_estado_completado
                 }
                 com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> {
-                    root.context.getColor(com.carpoolapp.R.color.estado_cancelado) to com.carpoolapp.R.drawable.bg_estado_cancelado
+                    root.context.getColor(com.carpoolapp.R.color.on_primary) to com.carpoolapp.R.drawable.bg_estado_cancelado
                 }
             }
             tvEstado.setTextColor(textColor)
@@ -124,7 +124,8 @@ class ViajeAdapter(
                 val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())
                 tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))
             } else {
-                tvFecha.visibility = View.GONE
+                tvFecha.text = root.context.getString(com.carpoolapp.R.string.msg_fecha_desconocida)
+                tvFecha.visibility = View.VISIBLE
             }
 
             // set a unique transition name for shared element transition

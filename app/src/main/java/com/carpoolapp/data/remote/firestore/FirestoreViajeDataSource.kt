@@ -2,6 +2,7 @@ package com.carpoolapp.data.remote.firestore
 
 import com.carpoolapp.data.remote.dto.ViajeDto
 import com.google.firebase.firestore.FirebaseFirestore
+import android.util.Log
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -68,7 +69,12 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
             .whereEqualTo("conductorId", conductorId)
             .orderBy("fechaHora", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(); return@addSnapshotListener }
+                if (error != null) {
+                    // Log error and emit empty list so UI doesn't stay in Loading indefinitely
+                    Log.w("FirestoreViajeDS", "Error listening viajes por conductor", error)
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap())
                 } ?: emptyList()

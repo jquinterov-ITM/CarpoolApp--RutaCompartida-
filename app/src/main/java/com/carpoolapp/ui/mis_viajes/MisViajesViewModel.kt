@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.util.Log
+import kotlinx.coroutines.delay
 
 sealed class MisViajesUiState {
     object Loading : MisViajesUiState()
@@ -35,17 +37,33 @@ class MisViajesViewModel @Inject constructor(
     }
 
     fun cargar() {
-        val uid = auth.currentUser?.uid ?: return
+        val uid = auth.currentUser?.uid
+        Log.d("MisViajesVM", "cargar() uid=${uid}")
+        if (uid == null) {
+            _uiState.value = MisViajesUiState.Error("Inicia sesion para ver viajes")
+            return
+        }
         viewModelScope.launch {
+            // timeout fallback: if after 8s still loading, show error so UI doesn't stay bloqueada
+            launch {
+                delay(8000)
+                if (_uiState.value is MisViajesUiState.Loading) {
+                    Log.w("MisViajesVM", "Timeout cargando viajes para uid=$uid")
+                    _uiState.value = MisViajesUiState.Error("No se pudo cargar viajes. Reintenta.")
+                }
+            }
             try {
                 val comoConductor = mutableListOf<Viaje>()
                 viajeRepository.getViajesPorConductor(uid).collect { viajes ->
+                    Log.d("MisViajesVM", "getViajesPorConductor emitted ${viajes.size} viajes for uid=$uid")
                     comoConductor.clear()
                     comoConductor.addAll(viajes)
                     val comoPasajero = viajeRepository.getViajesComoPasajero(uid)
+                    Log.d("MisViajesVM", "getViajesComoPasajero returned ${comoPasajero.size} viajes for uid=$uid")
                     _uiState.value = MisViajesUiState.Success(comoConductor, comoPasajero)
                 }
             } catch (e: Exception) {
+                Log.w("MisViajesVM", "Error cargando viajes", e)
                 _uiState.value = MisViajesUiState.Error(e.message ?: "Error al cargar viajes")
             }
         }
