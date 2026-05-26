@@ -7,6 +7,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 class FirestoreViajeDataSource @Inject constructor(
@@ -35,6 +37,7 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
 
     fun getFeed(usuarioId: String): Flow<List<ViajeDto>> = callbackFlow {
         val listener = collection
+            .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
@@ -65,14 +68,26 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getViajesPorConductor(conductorId: String): Flow<List<ViajeDto>> = callbackFlow {
-        val listener = collection
+        var listener: com.google.firebase.firestore.ListenerRegistration? = null
+        val query = collection
             .whereEqualTo("conductorId", conductorId)
             .orderBy("fechaHora", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
+
+        fun attach() {
+            try {
+                listener?.remove()
+            } catch (_: Exception) {}
+            listener = query.addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    // Log error and emit empty list so UI doesn't stay in Loading indefinitely
                     Log.w("FirestoreViajeDS", "Error listening viajes por conductor", error)
                     trySend(emptyList())
+                    // retry attaching after short delay
+                    try {
+                        launch {
+                            kotlinx.coroutines.delay(2000)
+                            attach()
+                        }
+                    } catch (_: Exception) {}
                     return@addSnapshotListener
                 }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
@@ -80,7 +95,10 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
                 } ?: emptyList()
                 trySend(viajes)
             }
-        awaitClose { listener.remove() }
+        }
+
+        attach()
+        awaitClose { try { listener?.remove() } catch (_: Exception) {} }
     }
 
     suspend fun getViajesPorPasajero(pasajeroId: String): List<ViajeDto> {
@@ -103,13 +121,11 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     suspend fun crear(dto: ViajeDto): String {
-        return try {
-            val ref = collection.add(dto).await()
-            ref.id
-        } catch (e: Exception) {
-            Log.w("FirestoreViajeDS", "Error creando viaje", e)
-            ""
-        }
+        // Use a document reference to get the generated id and store it inside the document
+        val ref = collection.document()
+        val dtoWithId = dto.copy(id = ref.id)
+        ref.set(dtoWithId).await()
+        return ref.id
     }
 
     suspend fun actualizarEstado(id: String, estado: String) {

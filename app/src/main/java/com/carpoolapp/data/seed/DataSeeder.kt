@@ -91,4 +91,32 @@ class DataSeeder @Inject constructor(
         }
         batch.commit().await()
     }
+
+    suspend fun seedRequestForUser(pasajeroId: String) {
+        // Check if user already has a request
+        val existing = firestoreSafe("DataSeeder-req", null as com.google.firebase.firestore.QuerySnapshot?) {
+            firestore.collectionGroup("requests").whereEqualTo("pasajeroId", pasajeroId).limit(1).get().await()
+        }
+        if (existing == null) return
+        if (existing.documents.isNotEmpty()) return
+
+        // Find any trip to attach the request to
+        val tripSnap = firestoreSafe("DataSeeder-trip", null as com.google.firebase.firestore.QuerySnapshot?) {
+            firestore.collection("trips").limit(1).get().await()
+        }
+        if (tripSnap == null) return
+        val tripDoc = tripSnap.documents.firstOrNull() ?: return
+
+        val request = mapOf(
+            "pasajeroId" to pasajeroId,
+            "estado" to "PENDIENTE",
+            "createdAt" to com.google.firebase.Timestamp.now()
+        )
+
+        try {
+            tripDoc.reference.collection("requests").add(request).await()
+        } catch (_: Exception) {
+            // ignore on debug seeding
+        }
+    }
 }

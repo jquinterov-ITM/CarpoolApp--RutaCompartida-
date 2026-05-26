@@ -120,8 +120,11 @@ class ViajeAdapter(
             tvEstado.setTextColor(textColor)
             flEstadoContainer.setBackgroundResource(bgColorRes)
 
-            if (viaje.fechaHora > 0) {
-                val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())
+            if (viaje.tipo == com.carpoolapp.domain.model.TipoViaje.INMEDIATO) {
+                tvFecha.text = root.context.getString(com.carpoolapp.R.string.label_inmediato)
+            } else if (viaje.fechaHora > 0) {
+                val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale("es"))
+                sdf.timeZone = java.util.TimeZone.getDefault()
                 tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))
             } else {
                 tvFecha.text = root.context.getString(com.carpoolapp.R.string.msg_fecha_desconocida)

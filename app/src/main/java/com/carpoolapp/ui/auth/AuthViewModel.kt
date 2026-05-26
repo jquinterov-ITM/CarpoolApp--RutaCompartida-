@@ -47,6 +47,8 @@ class AuthViewModel @Inject constructor(
                 val usuario = Usuario(id = user.uid, nombre = nombre, email = email)
                 try { usuarioRepository.guardar(usuario) } catch (_: Exception) {}
                 try { dataSeeder.seedIfEmpty() } catch (_: Exception) {}
+                // In debug builds, seed a request for the signed-in user to help UI testing
+                try { dataSeeder.seedRequestForUser(user.uid) } catch (_: Exception) {}
                 _uiState.value = AuthUiState.Autenticado(usuario)
             } catch (e: Exception) {
                 _uiState.value = AuthUiState.Error(mensajeFirebaseAuth(e, "correo y contraseña"))
@@ -64,6 +66,8 @@ class AuthViewModel @Inject constructor(
                 val usuario = Usuario(id = user.uid, nombre = nombre, email = email)
                 try { usuarioRepository.guardar(usuario) } catch (_: Exception) {}
                 try { dataSeeder.seedIfEmpty() } catch (_: Exception) {}
+                // In debug builds, seed a request for the registered user to help UI testing
+                try { dataSeeder.seedRequestForUser(user.uid) } catch (_: Exception) {}
                 _uiState.value = AuthUiState.Autenticado(usuario)
             } catch (e: Exception) {
                 _uiState.value = AuthUiState.Error(mensajeFirebaseAuth(e, "registro con correo y contraseña"))
@@ -83,6 +87,8 @@ class AuthViewModel @Inject constructor(
                 val usuario = Usuario(id = user.uid, nombre = nombre, email = email)
                 try { usuarioRepository.guardar(usuario) } catch (_: Exception) {}
                 try { dataSeeder.seedIfEmpty() } catch (_: Exception) {}
+                // In debug builds, seed a request for the Google signed-in user to help UI testing
+                try { dataSeeder.seedRequestForUser(user.uid) } catch (_: Exception) {}
                 _uiState.value = AuthUiState.Autenticado(usuario)
             } catch (e: Exception) {
                 _uiState.value = AuthUiState.Error(mensajeFirebaseAuth(e, "Google"))

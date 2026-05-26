@@ -30,6 +30,7 @@ service cloud.firestore {
         // Lectura permitida al pasajero autor de la solicitud o al conductor del viaje
         allow read: if request.auth != null && (
           resource.data.pasajeroId == request.auth.uid ||
+          // permitir también al conductor del viaje padre
           get(/databases/$(database)/documents/trips/$(tripId)).data.conductorId == request.auth.uid
         );
 
@@ -57,9 +58,15 @@ service cloud.firestore {
 
     // Permitir lecturas por collectionGroup para que los pasajeros puedan listar
     // sus solicitudes sin depender de la ruta completa del documento padre.
-    // Esto evita PERMISSION_DENIED en consultas collectionGroup("requests").
+    // También permitimos al conductor del viaje padre leer estas solicitudes.
     match /{document=**}/requests/{requestId} {
-      allow read: if request.auth != null && resource.data.pasajeroId == request.auth.uid;
+      allow read: if request.auth != null && (
+        resource.data.pasajeroId == request.auth.uid
+        ||
+        // el padre puede ser trips/{tripId}; permitimos que el conductor del trip padre lea
+        // $(document) contiene la ruta del documento padre (ej. "trips/ID")
+        get(/databases/$(database)/documents/$(document)).data.conductorId == request.auth.uid
+      );
       // Crear/actualizar/eliminar siguen controlados por la regla específica dentro de /trips/{tripId}
     }
 

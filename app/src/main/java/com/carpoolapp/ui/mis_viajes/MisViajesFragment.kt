@@ -21,6 +21,8 @@ import com.carpoolapp.domain.model.Viaje
 import com.carpoolapp.ui.common.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MisViajesFragment : BaseFragment<FragmentMisViajesBinding>() {
@@ -65,11 +67,31 @@ class MisViajesFragment : BaseFragment<FragmentMisViajesBinding>() {
                             binding.progressMisViajes.visibility = View.GONE
                             binding.tvMisViajesVacio.text = state.mensaje
                             binding.tvMisViajesVacio.visibility = View.VISIBLE
+                            // Allow tapping the empty view to seed a request for quick debug
+                            binding.tvMisViajesVacio.setOnClickListener {
+                                val uid = FirebaseAuth.getInstance().currentUser?.uid
+                                if (uid != null) {
+                                    viewLifecycleOwner.lifecycleScope.launch {
+                                        try {
+                                            com.carpoolapp.data.seed.DataSeeder(
+                                                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                            ).seedRequestForUser(uid)
+                                        } catch (_: Exception) {}
+                                        viewModel.cargar()
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Force reload when fragment becomes visible again (e.g., after publishing a trip)
+        viewModel.cargar()
     }
 
     private fun buildItems(state: MisViajesUiState.Success): List<MisViajeItem> {
@@ -176,8 +198,11 @@ class MisViajesAdapter(
                 tvEstado.setTextColor(textColor)
                 flEstadoContainer.setBackgroundResource(bgColorRes)
                 
-                if (viaje.fechaHora > 0) {
-                    val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())
+                if (viaje.tipo == com.carpoolapp.domain.model.TipoViaje.INMEDIATO) {
+                    tvFecha.text = root.context.getString(com.carpoolapp.R.string.label_inmediato)
+                } else if (viaje.fechaHora > 0) {
+                    val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale("es"))
+                    sdf.timeZone = java.util.TimeZone.getDefault()
                     tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))
                 } else {
                     tvFecha.text = root.context.getString(com.carpoolapp.R.string.msg_fecha_desconocida)
