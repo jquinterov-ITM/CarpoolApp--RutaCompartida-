@@ -74,9 +74,13 @@ class ViajeDetalleFragment : BaseFragment<FragmentViajeDetalleBinding>() {
                             binding.tvConductor.text = viaje.conductorNombre
                             binding.tvOrigen.text = viaje.origen
                             binding.tvDestino.text = viaje.destino
-                            binding.tvFecha.text = SimpleDateFormat(
-                                "EEE, d MMM 'a las' h:mm a", Locale.getDefault()
-                            ).format(Date(viaje.fechaHora))
+                            if (viaje.tipo == com.carpoolapp.domain.model.TipoViaje.INMEDIATO) {
+                                binding.tvFecha.text = requireContext().getString(com.carpoolapp.R.string.label_inmediato)
+                            } else {
+                                val sdf = SimpleDateFormat("EEE, d MMM 'a las' h:mm a", Locale("es"))
+                                sdf.timeZone = java.util.TimeZone.getDefault()
+                                binding.tvFecha.text = sdf.format(Date(viaje.fechaHora))
+                            }
                             binding.tvAsientos.text = "${viaje.asientosDisponibles} asientos disponibles"
                             binding.tvEstado.text = viaje.estado.name
                             val estadoColor = when (viaje.estado) {

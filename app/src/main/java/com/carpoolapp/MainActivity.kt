@@ -11,10 +11,10 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
-import com.carpoolapp.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import com.carpoolapp.databinding.ActivityMainBinding
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -41,11 +41,7 @@ class MainActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_SECURE
         )
 
-        // Check for OAuth success flag
-        val oauthSuccess = intent.getBooleanExtra("oauth_success", false)
-        
-        // Check if user is authenticated
-        val isAuthenticated = firebaseAuth.currentUser != null || oauthSuccess
+        val isAuthenticated = firebaseAuth.currentUser != null
         val useTabNavigation = isAuthenticated
 
 
@@ -64,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         
         if (useTabNavigation) {
             navGraphMap.forEach { (menuId, graphRes) ->
-                val tag = "navHost_\${menuId}"
+                val tag = "navHost_${menuId}"
                 navHostTags[menuId] = tag
                 var navHost = fragmentManager.findFragmentByTag(tag) as? NavHostFragment
                 if (navHost == null) {
@@ -76,7 +72,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } else {
-            // Show auth graph instead
             var authNavHost = fragmentManager.findFragmentByTag("navHost_auth") as? NavHostFragment
             if (authNavHost == null) {
                 authNavHost = NavHostFragment.create(R.navigation.nav_graph)

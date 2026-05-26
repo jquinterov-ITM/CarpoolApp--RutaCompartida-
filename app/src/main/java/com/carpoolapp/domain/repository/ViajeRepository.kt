@@ -9,6 +9,7 @@ interface ViajeRepository {
     fun getViajesPorConductor(conductorId: String): Flow<List<Viaje>>
     suspend fun getViajesComoPasajero(pasajeroId: String): List<Viaje>
     suspend fun crear(viaje: Viaje): String
+    fun createdEvents(): kotlinx.coroutines.flow.Flow<Viaje>
     suspend fun actualizarEstado(viajeId: String, estado: ViajeEstado)
     suspend fun seedDemoDataIfNeeded()
 }

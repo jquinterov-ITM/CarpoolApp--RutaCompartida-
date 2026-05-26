@@ -8,11 +8,20 @@ import com.carpoolapp.domain.model.ViajeEstado
 import com.carpoolapp.domain.repository.ViajeRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import javax.inject.Inject
 
 class ViajeRepositoryImpl @Inject constructor(
     private val dataSource: FirestoreViajeDataSource
 ) : ViajeRepository {
+
+    // Emit events for newly created viajes so UI can update optimistically.
+    // Set replay=1 so new subscribers (screens opened after creation)
+    // receive the last created viaje immediately.
+    private val _CreatedNotifier = MutableSharedFlow<com.carpoolapp.domain.model.Viaje>(replay = 1, extraBufferCapacity = 64)
+    override fun createdEvents(): kotlinx.coroutines.flow.Flow<Viaje> = _CreatedNotifier.asSharedFlow()
 
     override fun getFeed(usuarioId: String, destino: String?): Flow<List<Viaje>> {
         val flow = if (destino.isNullOrBlank()) {
@@ -33,7 +42,13 @@ class ViajeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun crear(viaje: Viaje): String {
-        return dataSource.crear(viaje.toDto())
+        val id = dataSource.crear(viaje.toDto())
+        // emit created viaje with id so listeners can update immediately
+        try {
+            _CreatedNotifier.tryEmit(viaje.copy(id = id))
+            android.util.Log.d("ViajeRepo", "emitted created event id=$id")
+        } catch (_: Exception) {}
+        return id
     }
 
     override suspend fun actualizarEstado(viajeId: String, estado: ViajeEstado) {

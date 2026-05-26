@@ -5,7 +5,7 @@
 | Servicio                     | Uso en CarpoolApp                                              |
 |------------------------------|----------------------------------------------------------------|
 | **Cloud Firestore**          | Base de datos principal compartida entre todos los usuarios    |
-| **Firebase Authentication**  | Login con email (OTP por correo, sin contraseña)               |
+| **Firebase Authentication**  | Login con correo/contraseña y Google                           |
 | **Firebase Cloud Messaging** | Notificaciones push de solicitudes aceptadas/rechazadas        |
 
 ## Setup en Android

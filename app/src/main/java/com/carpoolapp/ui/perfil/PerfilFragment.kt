@@ -40,13 +40,7 @@ class PerfilFragment : BaseFragment<FragmentPerfilBinding>() {
         binding.btnCerrarSesion.setOnClickListener {
             viewModel.cerrarSesion()
             Toast.makeText(requireContext(), "Sesión cerrada", Toast.LENGTH_SHORT).show()
-            findNavController().navigate(
-                com.carpoolapp.R.id.authFragment,
-                null,
-                androidx.navigation.NavOptions.Builder()
-                    .setPopUpTo(com.carpoolapp.R.id.nav_graph, true)
-                    .build()
-            )
+            requireActivity().recreate()
         }
 
         viewLifecycleOwner.lifecycleScope.launch {

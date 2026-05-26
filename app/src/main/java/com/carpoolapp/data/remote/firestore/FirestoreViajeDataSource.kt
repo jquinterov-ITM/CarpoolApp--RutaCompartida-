@@ -2,12 +2,13 @@ package com.carpoolapp.data.remote.firestore
 
 import com.carpoolapp.data.remote.dto.ViajeDto
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.auth.FirebaseAuth
 import android.util.Log
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 class FirestoreViajeDataSource @Inject constructor(
@@ -35,19 +36,10 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getFeed(usuarioId: String): Flow<List<ViajeDto>> = callbackFlow {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Log.w("FirestoreViajeDS", "No authenticated user — skipping feed listener")
-            close()
-            return@callbackFlow
-        }
         val listener = collection
+            .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("FirestoreViajeDS", "Listener error", error)
-                    close()
-                    return@addSnapshotListener
-                }
+                if (error != null) { close(); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap<String, Any?>())
                 }?.filter { 
@@ -59,20 +51,10 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getFeedPorDestino(usuarioId: String, destino: String): Flow<List<ViajeDto>> = callbackFlow {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Log.w("FirestoreViajeDS", "No authenticated user — skipping feedPorDestino listener")
-            close()
-            return@callbackFlow
-        }
         val listener = collection
             .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("FirestoreViajeDS", "Listener error", error)
-                    close()
-                    return@addSnapshotListener
-                }
+                if (error != null) { close(); return@addSnapshotListener }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap())
                 }?.filter { 
@@ -86,19 +68,26 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getViajesPorConductor(conductorId: String): Flow<List<ViajeDto>> = callbackFlow {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        if (currentUser == null) {
-            Log.w("FirestoreViajeDS", "No authenticated user — skipping viajesPorConductor listener")
-            close()
-            return@callbackFlow
-        }
-        val listener = collection
+        var listener: com.google.firebase.firestore.ListenerRegistration? = null
+        val query = collection
             .whereEqualTo("conductorId", conductorId)
             .orderBy("fechaHora", com.google.firebase.firestore.Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
+
+        fun attach() {
+            try {
+                listener?.remove()
+            } catch (_: Exception) {}
+            listener = query.addSnapshotListener { snapshot, error ->
                 if (error != null) {
-                    Log.e("FirestoreViajeDS", "Listener error", error)
-                    close()
+                    Log.w("FirestoreViajeDS", "Error listening viajes por conductor", error)
+                    trySend(emptyList())
+                    // retry attaching after short delay
+                    try {
+                        launch {
+                            kotlinx.coroutines.delay(2000)
+                            attach()
+                        }
+                    } catch (_: Exception) {}
                     return@addSnapshotListener
                 }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
@@ -106,37 +95,53 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
                 } ?: emptyList()
                 trySend(viajes)
             }
-        awaitClose { listener.remove() }
+        }
+
+        attach()
+        awaitClose { try { listener?.remove() } catch (_: Exception) {} }
     }
 
     suspend fun getViajesPorPasajero(pasajeroId: String): List<ViajeDto> {
-        val requests = firestore.collectionGroup("requests")
-            .whereEqualTo("pasajeroId", pasajeroId)
-            .get()
-            .await()
-        val tripIds = requests.documents.mapNotNull { it.reference.parent.parent?.id }
-        if (tripIds.isEmpty()) return emptyList()
-        val trips = collection
-            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), tripIds)
-            .get()
-            .await()
-        return trips.documents.mapNotNull { doc ->
-            documentToDto(doc.id, doc.data ?: emptyMap())
+        val result: List<ViajeDto> = firestoreSafe("FirestoreViajeDS", emptyList()) {
+            val requests = firestore.collectionGroup("requests")
+                .whereEqualTo("pasajeroId", pasajeroId)
+                .get()
+                .await()
+            val tripIds = requests.documents.mapNotNull { it.reference.parent.parent?.id }
+            if (tripIds.isEmpty()) return@firestoreSafe emptyList()
+            val trips = collection
+                .whereIn(com.google.firebase.firestore.FieldPath.documentId(), tripIds)
+                .get()
+                .await()
+            trips.documents.mapNotNull { doc ->
+                documentToDto(doc.id, doc.data ?: emptyMap())
+            }
         }
+        return result
     }
 
     suspend fun crear(dto: ViajeDto): String {
-        val ref = collection.add(dto).await()
+        // Use a document reference to get the generated id and store it inside the document
+        val ref = collection.document()
+        val dtoWithId = dto.copy(id = ref.id)
+        ref.set(dtoWithId).await()
         return ref.id
     }
 
     suspend fun actualizarEstado(id: String, estado: String) {
-        collection.document(id).update("estado", estado).await()
+        try {
+            collection.document(id).update("estado", estado).await()
+        } catch (e: Exception) {
+            Log.w("FirestoreViajeDS", "Error actualizando estado para $id", e)
+        }
     }
 
     suspend fun seedDemoDataIfNeeded() {
-        val count = collection.limit(1).get().await().size()
-        if (count > 0) return
+        val existingCount: Int = firestoreSafe("FirestoreViajeDS", -1) {
+            collection.limit(1).get().await().size()
+        }
+        if (existingCount > 0) return
+        if (existingCount < 0) return
 
         val now = System.currentTimeMillis()
         val demoTrips = listOf(
@@ -198,7 +203,11 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
         )
 
         demoTrips.forEach { trip ->
-            collection.add(trip).await()
+            try {
+                collection.add(trip).await()
+            } catch (e: Exception) {
+                Log.w("FirestoreViajeDS", "Error agregando demo trip", e)
+            }
         }
     }
 }

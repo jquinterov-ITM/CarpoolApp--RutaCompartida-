@@ -40,5 +40,7 @@ fun Viaje.toDto(): ViajeDto = ViajeDto(
     destino = destino,
     asientosDisponibles = asientosDisponibles,
     tipo = tipo.name,
-    estado = estado.name
+    estado = estado.name,
+    fechaHora = if (fechaHora > 0L) com.google.firebase.Timestamp(java.util.Date(fechaHora)) else com.google.firebase.Timestamp.now(),
+    createdAt = com.google.firebase.Timestamp.now()
 )

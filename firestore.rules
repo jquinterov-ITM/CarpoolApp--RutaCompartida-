@@ -18,7 +18,7 @@ service cloud.firestore {
                     && request.resource.data.conductorId == request.auth.uid
                     && request.resource.data.asientosDisponibles is int
                     && request.resource.data.asientosDisponibles >= 0
-                    && request.resource.data.estado in ["PROGRAMADO", "CANCELADO"];
+                    && request.resource.data.estado in ["PROGRAMADO", "CANCELADO", "ACTIVO"];
 
       allow update: if request.auth != null
                     && resource.data.conductorId == request.auth.uid;
@@ -53,6 +53,14 @@ service cloud.firestore {
 
         allow delete: if false;
       }
+    }
+
+    // Permitir lecturas por collectionGroup para que los pasajeros puedan listar
+    // sus solicitudes sin depender de la ruta completa del documento padre.
+    // Esto evita PERMISSION_DENIED en consultas collectionGroup("requests").
+    match /{document=**}/requests/{requestId} {
+      allow read: if request.auth != null && resource.data.pasajeroId == request.auth.uid;
+      // Crear/actualizar/eliminar siguen controlados por la regla específica dentro de /trips/{tripId}
     }
 
     // Denegar todo lo demás por defecto

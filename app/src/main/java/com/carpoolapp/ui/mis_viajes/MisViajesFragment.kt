@@ -21,6 +21,8 @@ import com.carpoolapp.domain.model.Viaje
 import com.carpoolapp.ui.common.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MisViajesFragment : BaseFragment<FragmentMisViajesBinding>() {
@@ -65,11 +67,31 @@ class MisViajesFragment : BaseFragment<FragmentMisViajesBinding>() {
                             binding.progressMisViajes.visibility = View.GONE
                             binding.tvMisViajesVacio.text = state.mensaje
                             binding.tvMisViajesVacio.visibility = View.VISIBLE
+                            // Allow tapping the empty view to seed a request for quick debug
+                            binding.tvMisViajesVacio.setOnClickListener {
+                                val uid = FirebaseAuth.getInstance().currentUser?.uid
+                                if (uid != null) {
+                                    viewLifecycleOwner.lifecycleScope.launch {
+                                        try {
+                                            com.carpoolapp.data.seed.DataSeeder(
+                                                com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                            ).seedRequestForUser(uid)
+                                        } catch (_: Exception) {}
+                                        viewModel.cargar()
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Force reload when fragment becomes visible again (e.g., after publishing a trip)
+        viewModel.cargar()
     }
 
     private fun buildItems(state: MisViajesUiState.Success): List<MisViajeItem> {
@@ -160,27 +182,31 @@ class MisViajesAdapter(
                 
                 val (textColor, bgColorRes) = when (viaje.estado) {
                     com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> {
-                        root.context.getColor(R.color.estado_programado) to R.drawable.bg_estado_programado
+                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_programado
                     }
                     com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> {
-                        root.context.getColor(R.color.estado_activo) to R.drawable.bg_estado_activo
+                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_activo
                     }
                     com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> {
-                        root.context.getColor(R.color.estado_completado) to R.drawable.bg_estado_completado
+                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_completado
                     }
                     com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> {
-                        root.context.getColor(R.color.estado_cancelado) to R.drawable.bg_estado_cancelado
+                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_cancelado
                     }
                 }
                 
                 tvEstado.setTextColor(textColor)
                 flEstadoContainer.setBackgroundResource(bgColorRes)
                 
-                if (viaje.fechaHora > 0) {
-                    val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale.getDefault())
+                if (viaje.tipo == com.carpoolapp.domain.model.TipoViaje.INMEDIATO) {
+                    tvFecha.text = root.context.getString(com.carpoolapp.R.string.label_inmediato)
+                } else if (viaje.fechaHora > 0) {
+                    val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale("es"))
+                    sdf.timeZone = java.util.TimeZone.getDefault()
                     tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))
                 } else {
-                    tvFecha.visibility = View.GONE
+                    tvFecha.text = root.context.getString(com.carpoolapp.R.string.msg_fecha_desconocida)
+                    tvFecha.visibility = View.VISIBLE
                 }
                 root.setOnClickListener { onClick(viaje) }
             }
