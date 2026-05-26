@@ -15,6 +15,7 @@ class FirestoreUsuarioDataSource @Inject constructor(
     private val collection get() = firestore.collection("users")
 
     fun getUsuario(userId: String): Flow<UsuarioDto?> = callbackFlow {
+        val currentUser = requireAuthOrClose(this) ?: return@callbackFlow
         val listener = collection.document(userId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(); return@addSnapshotListener }
