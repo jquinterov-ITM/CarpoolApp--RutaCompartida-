@@ -70,7 +70,7 @@ class ViajeDetalleFragment : BaseFragment<FragmentViajeDetalleBinding>() {
                             val initials = viaje.conductorNombre.split(" ")
                                 .joinToString("") { it.take(1).uppercase() }
                                 .take(2)
-                            binding.ivAvatar.text = initials.ifEmpty { "?" }
+                            binding.ivAvatar.contentDescription = initials.ifEmpty { "?" }
                             binding.tvConductor.text = viaje.conductorNombre
                             binding.tvOrigen.text = viaje.origen
                             binding.tvDestino.text = viaje.destino

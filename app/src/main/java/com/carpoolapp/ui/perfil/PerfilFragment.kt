@@ -52,7 +52,7 @@ class PerfilFragment : BaseFragment<FragmentPerfilBinding>() {
                             val initials = u.nombre.split(" ")
                                 .joinToString("") { it.take(1).uppercase() }
                                 .take(2)
-                            binding.avatar.text = initials.ifEmpty { "?" }
+                            binding.avatar.contentDescription = initials.ifEmpty { "?" }
                             binding.tvNombre.text = u.nombre
                             binding.tvEmail.text = u.email
                             binding.vehiculoInput.setText(u.vehiculo ?: "")

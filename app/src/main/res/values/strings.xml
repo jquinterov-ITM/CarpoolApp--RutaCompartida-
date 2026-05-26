@@ -41,4 +41,5 @@
     <string name="sign_in_to_continue">Inicia sesión para continuar</string>
     <string name="sign_in">Iniciar Sesión</string>
     <string name="sign_up">Crear Cuenta</string>
+    <string name="desc_avatar">Avatar del usuario</string>
 </resources>
