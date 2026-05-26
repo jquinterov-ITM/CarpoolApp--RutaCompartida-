@@ -2,9 +2,9 @@
 
 ## Autenticación
 
-- Firebase Auth con Email Link (OTP por correo, sin contraseña).
-- Email pendiente guardado en `EncryptedSharedPreferences`.
-- Link expira en 1 hora.
+- Firebase Auth con correo/contraseña y Google.
+- Los proveedores Email/Password y Google deben estar habilitados en Firebase Console > Authentication > Sign-in method.
+- No se usa acceso por link de correo.
 
 ## Reglas de Firestore
 
@@ -16,7 +16,6 @@
 
 | Dato                        | Almacenamiento correcto          |
 |-----------------------------|----------------------------------|
-| Email pendiente (pre-login) | `EncryptedSharedPreferences`     |
 | Token FCM                   | Firestore `/users/{uid}.fcmToken`|
 | Datos del perfil            | Room (caché local)               |
 | Credenciales de Firebase    | `google-services.json` (fuera del repo) |

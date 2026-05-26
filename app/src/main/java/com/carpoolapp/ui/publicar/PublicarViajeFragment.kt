@@ -15,6 +15,10 @@ import com.carpoolapp.domain.model.TipoViaje
 import com.carpoolapp.ui.common.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import android.text.format.DateFormat
+import java.util.Calendar
 
 @AndroidEntryPoint
 class PublicarViajeFragment : BaseFragment<FragmentPublicarViajeBinding>() {
@@ -28,6 +32,8 @@ class PublicarViajeFragment : BaseFragment<FragmentPublicarViajeBinding>() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        var selectedFechaHora: Long = 0L
 
         // Dar feedback visual manteniendo la selección exclusiva del grupo
         binding.tipoToggle.addOnButtonCheckedListener { group, checkedId, isChecked ->
@@ -46,6 +52,7 @@ class PublicarViajeFragment : BaseFragment<FragmentPublicarViajeBinding>() {
             val destino = binding.destinoInput.text.toString().trim()
             val asientos = binding.asientosInput.text.toString().toIntOrNull() ?: 0
             val tipo = if (binding.btnInmediato.isChecked) TipoViaje.INMEDIATO else TipoViaje.PROGRAMADO
+            val fechaHora = if (tipo == TipoViaje.PROGRAMADO) selectedFechaHora else 0L
 
             if (origen.isBlank() || destino.isBlank()) {
                 Toast.makeText(requireContext(), "Ingresa origen y destino", Toast.LENGTH_SHORT).show()
@@ -56,8 +63,45 @@ class PublicarViajeFragment : BaseFragment<FragmentPublicarViajeBinding>() {
                 return@setOnClickListener
             }
 
-            viewModel.publicar(origen, destino, asientos, tipo)
+            if (tipo == TipoViaje.PROGRAMADO && fechaHora <= 0L) {
+                Toast.makeText(requireContext(), "Selecciona fecha y hora para un viaje programado", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            viewModel.publicar(origen, destino, asientos, tipo, fechaHora)
         }
+
+        // Date/time picker handling
+        fun pickDateTime() {
+            val now = Calendar.getInstance()
+            DatePickerDialog(requireContext(), { _, year, month, dayOfMonth ->
+                TimePickerDialog(requireContext(), { _, hourOfDay, minute ->
+                    val cal = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, year)
+                        set(Calendar.MONTH, month)
+                        set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                        set(Calendar.HOUR_OF_DAY, hourOfDay)
+                        set(Calendar.MINUTE, minute)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    selectedFechaHora = cal.timeInMillis
+                    binding.tvFechaSeleccionada.text = DateFormat.format("EEE, d MMM yyyy 'a las' h:mm a", cal).toString()
+                }, now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), false).show()
+            }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH)).show()
+        }
+
+        binding.btnFecha.setOnClickListener { pickDateTime() }
+
+        // Show/hide date controls depending on tipo
+        fun updateFechaControlsVisibility() {
+            val programado = binding.btnProgramado.isChecked
+            binding.btnFecha.visibility = if (programado) View.VISIBLE else View.GONE
+            binding.tvFechaSeleccionada.visibility = if (programado) View.VISIBLE else View.GONE
+            binding.tipoFechaLabel.visibility = if (programado) View.VISIBLE else View.GONE
+        }
+
+        updateFechaControlsVisibility()
+        binding.tipoToggle.addOnButtonCheckedListener { _, _, _ -> updateFechaControlsVisibility() }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

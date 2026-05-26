@@ -18,7 +18,7 @@ class FirestoreSolicitudDataSource @Inject constructor(
     fun getSolicitudesPorViaje(tripId: String): Flow<List<SolicitudDto>> = callbackFlow {
         val listener = requestsCollection(tripId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) { close(); return@addSnapshotListener }
                 val solicitudes = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject<SolicitudDto>()?.copy(id = doc.id)
                 } ?: emptyList()
@@ -28,26 +28,32 @@ class FirestoreSolicitudDataSource @Inject constructor(
     }
 
     suspend fun crear(tripId: String, dto: SolicitudDto): String {
-        val ref = requestsCollection(tripId).add(dto).await()
-        return ref.id
+        return firestoreSafe("FirestoreSolicitudDS", "") {
+            val ref = requestsCollection(tripId).add(dto).await()
+            ref.id
+        }
     }
 
     suspend fun actualizarEstado(tripId: String, requestId: String, estado: String) {
-        requestsCollection(tripId).document(requestId)
-            .update("estado", estado).await()
+        firestoreSafe("FirestoreSolicitudDS", Unit) {
+            requestsCollection(tripId).document(requestId)
+                .update("estado", estado).await()
+        }
     }
 
     suspend fun aceptarConTransaction(tripId: String, requestId: String) {
-        firestore.runTransaction { transaction ->
-            val tripRef = firestore.collection("trips").document(tripId)
-            val requestRef = requestsCollection(tripId).document(requestId)
-            val trip = transaction.get(tripRef)
+        firestoreSafe("FirestoreSolicitudDS", Unit) {
+            firestore.runTransaction { transaction ->
+                val tripRef = firestore.collection("trips").document(tripId)
+                val requestRef = requestsCollection(tripId).document(requestId)
+                val trip = transaction.get(tripRef)
 
-            val asientos = trip.getLong("asientosDisponibles") ?: 0
-            if (asientos <= 0) throw IllegalStateException("No hay asientos disponibles")
+                val asientos = trip.getLong("asientosDisponibles") ?: 0
+                if (asientos <= 0) throw IllegalStateException("No hay asientos disponibles")
 
-            transaction.update(tripRef, "asientosDisponibles", asientos - 1)
-            transaction.update(requestRef, "estado", "ACEPTADA")
-        }.await()
+                transaction.update(tripRef, "asientosDisponibles", asientos - 1)
+                transaction.update(requestRef, "estado", "ACEPTADA")
+            }.await()
+        }
     }
 }

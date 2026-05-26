@@ -34,7 +34,8 @@ class PublicarViajeViewModel @Inject constructor(
         origen: String,
         destino: String,
         asientos: Int,
-        tipo: TipoViaje
+        tipo: TipoViaje,
+        fechaHora: Long = 0L
     ) {
         val usuario = auth.currentUser ?: return
         val nombre = usuario.displayName ?: usuario.email?.substringBefore("@") ?: ""
@@ -48,6 +49,7 @@ class PublicarViajeViewModel @Inject constructor(
                     origen = origen,
                     destino = destino,
                     asientosDisponibles = asientos,
+                    fechaHora = fechaHora,
                     tipo = tipo,
                     estado = if (tipo == TipoViaje.INMEDIATO) ViajeEstado.ACTIVO else ViajeEstado.PROGRAMADO
                 )

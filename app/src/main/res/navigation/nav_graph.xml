@@ -6,17 +6,6 @@
     app:startDestination="@id/authFragment">
 
     <fragment
-        android:id="@+id/clerkSignInFragment"
-        android:name="com.carpoolapp.ui.auth.ClerkSignInFragment"
-        android:label="Clerk Sign In">
-        <action
-            android:id="@+id/action_clerkSignInFragment_to_homeFragment"
-            app:destination="@id/homeFragment"
-            app:popUpTo="@id/clerkSignInFragment"
-            app:popUpToInclusive="true" />
-    </fragment>
-
-    <fragment
         android:id="@+id/authFragment"
         android:name="com.carpoolapp.ui.auth.AuthFragment"
         android:label="Auth">

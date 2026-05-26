@@ -40,7 +40,7 @@ app/src/main/java/com/carpoolapp/
 ├── di/                        # Hilt modules
 ├── notifications/             # FCM Service
 └── ui/
-    ├── auth/                  # Login con email + OTP
+    ├── auth/                  # Login con correo/contraseña + Google
     ├── home/                  # Feed de viajes en tiempo real
     ├── publicar/              # Formulario para crear viaje
     ├── buscar/                # Búsqueda por destino
@@ -66,7 +66,7 @@ app/src/main/java/com/carpoolapp/
 2. Agregar app Android con package name `com.carpoolapp`
 3. Descargar `google-services.json` y copiar a `app/google-services.json`
 4. Activar servicios:
-   - **Authentication** → Sign-in method → **Email link (passwordless sign-in)**
+    - **Authentication** → Sign-in method → **Email/Password** y **Google**
    - **Firestore Database** → Create database → modo test (ajustar reglas después)
 5. Crear los índices compuestos en Firestore (ver `docs/firebase.md`)
 
@@ -104,7 +104,7 @@ Ver esquema detallado en `docs/firebase.md`.
 
 | Pantalla       | Fragment                  | Descripción                                    |
 |----------------|---------------------------|------------------------------------------------|
-| Login          | `AuthFragment`            | Email → OTP por correo → Firebase Auth         |
+| Login          | `AuthFragment`            | Email/contraseña + Google → Firebase Auth      |
 | Home / Feed    | `HomeFragment`            | Listener Firestore en tiempo real              |
 | Publicar viaje | `PublicarViajeFragment`   | Formulario → escribe en Firestore              |
 | Buscar viaje   | `BuscarViajeFragment`     | Búsqueda por destino                           |

@@ -44,7 +44,6 @@ class HomeViewModelTest {
         Dispatchers.setMain(dispatcher)
 
         val viajeRepo = mockk<ViajeRepository>(relaxed = true)
-        coEvery { viajeRepo.seedDemoDataIfNeeded() } returns Unit
 
         val feedFlow = flow { emit(listOf(sample)) }
         val getFeed = mockk<GetFeedUseCase>()
@@ -67,7 +66,7 @@ class HomeViewModelTest {
             else -> throw AssertionError("Expected Success state")
         }
 
-        coVerify { viajeRepo.seedDemoDataIfNeeded() }
+        // No se verifica seedDemoDataIfNeeded() porque la siembra ya no se ejecuta en init
     }
 
     @Test
