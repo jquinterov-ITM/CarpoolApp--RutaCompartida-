@@ -13,6 +13,7 @@ suspend inline fun <T> firestoreSafe(tag: String, fallback: T, crossinline block
         try {
             val crash = FirebaseCrashlytics.getInstance()
             val isPermissionDenied = e is FirebaseFirestoreException && e.code == FirebaseFirestoreException.Code.PERMISSION_DENIED
+            val isFailedPrecondition = e is FirebaseFirestoreException && e.code == FirebaseFirestoreException.Code.FAILED_PRECONDITION
             if (isPermissionDenied) {
                 crash.log("PERMISSION_DENIED on $tag: ${e.message}")
                 try {
@@ -20,6 +21,10 @@ suspend inline fun <T> firestoreSafe(tag: String, fallback: T, crossinline block
                     if (uid != null) crash.setCustomKey("firestore_permission_denied_uid", uid)
                 } catch (_: Exception) {}
                 crash.setCustomKey("firestore_permission_denied", true)
+            }
+            if (isFailedPrecondition) {
+                crash.log("FAILED_PRECONDITION on $tag: ${e.message}")
+                crash.setCustomKey("firestore_failed_precondition", true)
             }
             crash.recordException(e)
         } catch (_: Exception) {

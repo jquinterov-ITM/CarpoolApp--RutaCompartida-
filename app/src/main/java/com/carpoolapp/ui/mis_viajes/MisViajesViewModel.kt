@@ -39,6 +39,12 @@ class MisViajesViewModel @Inject constructor(
         cargar()
     }
 
+    // Simple in-memory cache to avoid repeatedly calling pasajero queries which
+    // can fail with FAILED_PRECONDITION while an index is missing or building.
+    private var _lastComoPasajero: List<Viaje> = emptyList()
+    private var _lastComoPasajeroAt: Long = 0L
+    private val COMO_PASAJERO_CACHE_MS = 5_000L
+
     fun cargar() {
             // Cancel previous collectors before starting new ones.
             try {
@@ -76,7 +82,7 @@ class MisViajesViewModel @Inject constructor(
                                 Log.d("MisViajesVM", "Received created event for uid=$uid id=${nuevo.id}")
                                 if (comoConductor.none { it.id == nuevo.id }) {
                                     comoConductor.add(0, nuevo)
-                                    val comoPasajeroNow = try { viajeRepository.getViajesComoPasajero(uid) } catch (e: Exception) { emptyList<Viaje>() }
+                                    val comoPasajeroNow = try { fetchComoPasajeroOnce(uid) } catch (e: Exception) { emptyList<Viaje>() }
                                     _uiState.value = MisViajesUiState.Success(comoConductor.toList(), comoPasajeroNow)
                                 }
                             }
@@ -95,7 +101,7 @@ class MisViajesViewModel @Inject constructor(
                             Log.d("MisViajesVM", "getViajesPorConductor emitted ${'$'}{viajes.size} viajes for uid=$uid")
                             comoConductor.clear()
                             comoConductor.addAll(viajes)
-                            val comoPasajero = try { viajeRepository.getViajesComoPasajero(uid) } catch (e: Exception) { emptyList<Viaje>() }
+                            val comoPasajero = try { fetchComoPasajeroOnce(uid) } catch (e: Exception) { emptyList<Viaje>() }
                             Log.d("MisViajesVM", "getViajesComoPasajero returned ${'$'}{comoPasajero.size} viajes for uid=$uid")
                             _uiState.value = MisViajesUiState.Success(comoConductor.toList(), comoPasajero)
                         } catch (e: Exception) {
@@ -108,4 +114,25 @@ class MisViajesViewModel @Inject constructor(
     private var _collectJob: Job? = null
     private var _conductorJob: Job? = null
     private var _createdEventsJob: Job? = null
+
+    private suspend fun fetchComoPasajeroOnce(uid: String): List<Viaje> {
+        val now = System.currentTimeMillis()
+        if (now - _lastComoPasajeroAt <= COMO_PASAJERO_CACHE_MS) return _lastComoPasajero
+        return try {
+            val list = viajeRepository.getViajesComoPasajero(uid)
+            _lastComoPasajero = list
+            _lastComoPasajeroAt = now
+            list
+        } catch (e: com.google.firebase.firestore.FirebaseFirestoreException) {
+            if (e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.FAILED_PRECONDITION) {
+                Log.w("MisViajesVM", "Firestore index missing (pasajeroId) — returning cached/empty list", e)
+                _lastComoPasajeroAt = now
+                _lastComoPasajero
+            } else throw e
+        } catch (e: Exception) {
+            Log.w("MisViajesVM", "Error fetching comoPasajero", e)
+            _lastComoPasajeroAt = now
+            _lastComoPasajero
+        }
+    }
 }
