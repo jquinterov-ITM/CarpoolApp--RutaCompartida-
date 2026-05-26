@@ -27,15 +27,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <TextView
+                <ImageView
                     android:id="@+id/avatar"
                     android:layout_width="72dp"
                     android:layout_height="72dp"
                     android:background="@drawable/circle_avatar_background"
-                    android:gravity="center"
-                    android:textSize="28sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/on_primary"
+                    android:padding="16dp"
+                    android:src="@drawable/ic_person_grey_24dp"
+                    app:tint="@color/on_primary"
+                    android:contentDescription="@string/desc_avatar"
                     app:layout_constraintTop_toTopOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent" />

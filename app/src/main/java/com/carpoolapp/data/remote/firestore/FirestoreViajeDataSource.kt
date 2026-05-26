@@ -2,6 +2,8 @@ package com.carpoolapp.data.remote.firestore
 
 import com.carpoolapp.data.remote.dto.ViajeDto
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
+import android.util.Log
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -33,9 +35,19 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getFeed(usuarioId: String): Flow<List<ViajeDto>> = callbackFlow {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.w("FirestoreViajeDS", "No authenticated user — skipping feed listener")
+            close()
+            return@callbackFlow
+        }
         val listener = collection
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    Log.e("FirestoreViajeDS", "Listener error", error)
+                    close()
+                    return@addSnapshotListener
+                }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap<String, Any?>())
                 }?.filter { 
@@ -47,10 +59,20 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getFeedPorDestino(usuarioId: String, destino: String): Flow<List<ViajeDto>> = callbackFlow {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.w("FirestoreViajeDS", "No authenticated user — skipping feedPorDestino listener")
+            close()
+            return@callbackFlow
+        }
         val listener = collection
             .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    Log.e("FirestoreViajeDS", "Listener error", error)
+                    close()
+                    return@addSnapshotListener
+                }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap())
                 }?.filter { 
@@ -64,11 +86,21 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getViajesPorConductor(conductorId: String): Flow<List<ViajeDto>> = callbackFlow {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.w("FirestoreViajeDS", "No authenticated user — skipping viajesPorConductor listener")
+            close()
+            return@callbackFlow
+        }
         val listener = collection
             .whereEqualTo("conductorId", conductorId)
             .orderBy("fechaHora", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    Log.e("FirestoreViajeDS", "Listener error", error)
+                    close()
+                    return@addSnapshotListener
+                }
                 val viajes = snapshot?.documents?.mapNotNull { doc ->
                     documentToDto(doc.id, doc.data ?: emptyMap())
                 } ?: emptyList()

@@ -24,7 +24,7 @@
             android:layout_height="48dp"
             android:background="@drawable/circle_avatar_background"
             android:padding="12dp"
-            android:src="@android:drawable/ic_menu_info_details"
+            android:src="@drawable/ic_person_grey_24dp"
             app:tint="@color/on_primary"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"

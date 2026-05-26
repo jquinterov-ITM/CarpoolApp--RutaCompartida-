@@ -13,6 +13,7 @@ import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import com.carpoolapp.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     private val tabBackStack: ArrayDeque<Int> = ArrayDeque()
     private lateinit var navHostTagMap: Map<Int, String>
     private var currentItemIdField: Int = R.id.homeFragment
+    private var authStateListener: FirebaseAuth.AuthStateListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,6 +98,43 @@ class MainActivity : AppCompatActivity() {
         // Expose navHostTags map to rest of class
         navHostTagMap = navHostTags
 
+        // Listen to auth state changes and switch to auth flow when user is null
+        authStateListener = FirebaseAuth.AuthStateListener { auth ->
+            val user = auth.currentUser
+            if (user == null) {
+                // Defer UI fragment transactions until Activity is resumed to avoid
+                // IllegalStateException "Can not perform this action after onSaveInstanceState"
+                lifecycleScope.launchWhenResumed {
+                    binding.bottomNavigation.visibility = View.GONE
+                    val fragmentManager = supportFragmentManager
+                    // hide any tab nav hosts
+                    navHostTagMap.values.forEach { tag ->
+                        fragmentManager.findFragmentByTag(tag)?.let { f ->
+                            fragmentManager.beginTransaction().hide(f).commitAllowingStateLoss()
+                        }
+                    }
+                    var authNavHost = fragmentManager.findFragmentByTag("navHost_auth") as? NavHostFragment
+                    if (authNavHost == null) {
+                        authNavHost = NavHostFragment.create(R.navigation.nav_graph)
+                        fragmentManager.beginTransaction()
+                            .add(R.id.nav_host_fragment, authNavHost, "navHost_auth")
+                            .commitAllowingStateLoss()
+                    } else {
+                        fragmentManager.beginTransaction().show(authNavHost).commitAllowingStateLoss()
+                    }
+                    navControllerRef = authNavHost.navController
+                    // navigate to authFragment if available
+                    try {
+                        navControllerRef?.navigate(R.id.authFragment)
+                    } catch (_: Exception) { }
+                }
+            } else {
+                // user signed in -> re-create activity to initialize tab navigation
+                lifecycleScope.launchWhenResumed { recreate() }
+            }
+        }
+        firebaseAuth.addAuthStateListener(authStateListener!!)
+
         if (useTabNavigation) {
             // Tab-based navigation setup
             val listenerMap = mutableMapOf<Int, NavController.OnDestinationChangedListener>()
@@ -157,6 +196,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             super.onSupportNavigateUp()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        authStateListener?.let { firebaseAuth.removeAuthStateListener(it) }
     }
 
     override fun onBackPressed() {

@@ -2,7 +2,9 @@ package com.carpoolapp.data.remote.firestore
 
 import com.carpoolapp.data.remote.dto.SolicitudDto
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.toObject
+import android.util.Log
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -16,9 +18,19 @@ class FirestoreSolicitudDataSource @Inject constructor(
         firestore.collection("trips").document(tripId).collection("requests")
 
     fun getSolicitudesPorViaje(tripId: String): Flow<List<SolicitudDto>> = callbackFlow {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Log.w("FirestoreSolicitudDS", "No authenticated user — skipping solicitudes listener")
+            close()
+            return@callbackFlow
+        }
         val listener = requestsCollection(tripId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) {
+                    Log.e("FirestoreSolicitudDS", "Listener error", error)
+                    close()
+                    return@addSnapshotListener
+                }
                 val solicitudes = snapshot?.documents?.mapNotNull { doc ->
                     doc.toObject<SolicitudDto>()?.copy(id = doc.id)
                 } ?: emptyList()
