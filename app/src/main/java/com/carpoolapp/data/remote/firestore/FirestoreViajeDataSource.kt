@@ -36,6 +36,7 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getFeed(usuarioId: String): Flow<List<ViajeDto>> = callbackFlow {
+        val currentUser = requireAuthOrClose(this) ?: return@callbackFlow
         val listener = collection
             .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
@@ -51,6 +52,7 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
     }
 
     fun getFeedPorDestino(usuarioId: String, destino: String): Flow<List<ViajeDto>> = callbackFlow {
+        val currentUser = requireAuthOrClose(this) ?: return@callbackFlow
         val listener = collection
             .orderBy("fechaHora")
             .addSnapshotListener { snapshot, error ->
@@ -69,6 +71,7 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
 
     fun getViajesPorConductor(conductorId: String): Flow<List<ViajeDto>> = callbackFlow {
         var listener: com.google.firebase.firestore.ListenerRegistration? = null
+        val currentUser = requireAuthOrClose(this) ?: return@callbackFlow
         val query = collection
             .whereEqualTo("conductorId", conductorId)
             .orderBy("fechaHora", com.google.firebase.firestore.Query.Direction.DESCENDING)

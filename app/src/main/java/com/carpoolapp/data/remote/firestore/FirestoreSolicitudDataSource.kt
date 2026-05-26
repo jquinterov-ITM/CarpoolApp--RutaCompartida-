@@ -16,6 +16,7 @@ class FirestoreSolicitudDataSource @Inject constructor(
         firestore.collection("trips").document(tripId).collection("requests")
 
     fun getSolicitudesPorViaje(tripId: String): Flow<List<SolicitudDto>> = callbackFlow {
+        val currentUser = requireAuthOrClose(this) ?: return@callbackFlow
         val listener = requestsCollection(tripId)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) { close(); return@addSnapshotListener }
