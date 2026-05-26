@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/homeFragment"
-        android:icon="@android:drawable/ic_menu_mylocation"
+        android:icon="@drawable/ic_home_grey_24dp"
         android:title="@string/nav_home" />
     <item
         android:id="@+id/buscarFragment"

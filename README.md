@@ -1,45 +1,34 @@
 # CarpoolApp
 
-Aplicación Android de carpooling comunitario donde cualquier usuario puede publicar un viaje como conductor o unirse a uno como pasajero. Sin pagos — solo coordinación de rutas compartidas.
+Aplicación Android de carpooling comunitario (Kotlin, MVVM). Este README está actualizado al estado actual del desarrollo y contiene instrucciones rápidas de prueba y debugging.
 
-## Stack Tecnológico
+## Estado actual (resumen)
+- Optimistic UI implementada para `Publicar viaje`: el repositorio emite eventos locales inmediatamente usando `MutableSharedFlow` (replay=1, extraBufferCapacity=64). Archivo: `app/src/main/java/com/carpoolapp/data/repository/ViajeRepositoryImpl.kt`.
+- `MisViajesViewModel` parcheado para aislar collectors en jobs separados y evitar que un fallo en una query cancele otros collectors. Archivo: `app/src/main/java/com/carpoolapp/ui/mis_viajes/MisViajesViewModel.kt`.
+- `firestore.rules.copy` añadido con reglas sugeridas para staging; publicar en la consola de Firestore es necesario para permisos correctos.
+- `firestore.indexes.json` incluido para deploy de índices necesarios (collectionGroup queries). Ver `firestore.indexes.json` en la raíz del proyecto.
+- APK debug instalada y probada en emulador(s) con `./gradlew installDebug`.
 
-| Capa         | Tecnología                                    |
-|-------------|-----------------------------------------------|
-| Lenguaje    | Kotlin 100%                                   |
-| UI          | XML Views + ViewBinding                       |
-| Arquitectura | MVVM + Clean Architecture (Data / Domain / UI) |
-| Backend     | Firebase (Cloud Firestore + Auth + FCM)       |
-| Caché local | Room (SQLite)                                 |
-| DI          | Hilt                                          |
-| Navegación  | Navigation Component (Single Activity)        |
-| Async       | Coroutines + Flow / StateFlow                 |
-| Listas      | RecyclerView + ListAdapter + DiffUtil         |
-| Build       | Gradle con Kotlin DSL + Version Catalog       |
+## Stack Tecnológico (rápido)
 
-## Estructura del Proyecto
+- Kotlin, Android (XML + ViewBinding)
+- MVVM + Clean-ish layers (data/domain/ui)
+- Firebase: Firestore, Auth, FCM
+- Room (local cache)
+- Hilt (DI)
+- Coroutines + Flow / StateFlow
+- Gradle (Kotlin DSL)
+
+## Estructura relevante
 
 ```
 app/src/main/java/com/carpoolapp/
-├── CarpoolApp.kt              # Application class (@HiltAndroidApp)
-├── MainActivity.kt            # Single Activity + Bottom Navigation
-├── data/
-│   ├── local/
-│   │   ├── dao/               # Room DAOs
-│   │   ├── db/                # AppDatabase
-│   │   └── entity/            # Room entities
-│   ├── mapper/                # DTO <-> Domain mappers
-│   ├── remote/
-│   │   ├── dto/               # Firestore DTOs
-│   │   └── firestore/         # Firestore DataSources
-│   └── repository/            # Repository implementations
-├── domain/
-│   ├── model/                 # Domain models (data classes puras)
-│   ├── repository/            # Repository interfaces
-│   └── usecase/               # Casos de uso (uno por clase)
-├── di/                        # Hilt modules
-├── notifications/             # FCM Service
+├── data/repository/    # Implementaciones (incluye optimist notifier)
+├── data/remote/firestore/  # Firestore data sources
+├── domain/repository/  # Interfaces
 └── ui/
+        ├── mis_viajes/     # ViewModel y Fragment claves para collectors
+        └── publicar/       # PublicarViajeFragment / ViewModel
     ├── auth/                  # Login con correo/contraseña + Google
     ├── home/                  # Feed de viajes en tiempo real
     ├── publicar/              # Formulario para crear viaje
@@ -51,79 +40,89 @@ app/src/main/java/com/carpoolapp/
     └── common/                # BaseFragment, utilidades
 ```
 
-## Requisitos
+## Cómo probar rápidamente (pasos reproducibles)
 
-- Android Studio Hedgehog 2023.1.1 o superior
-- JDK 17
-- SDK Android: compileSdk 35, minSdk 26, targetSdk 35
-- Firebase project (crear en [Firebase Console](https://console.firebase.google.com))
+1) Compilar e instalar debug (desde la carpeta `CarpoolApp`):
 
-## Configuración Inicial
-
-### 1. Firebase
-
-1. Crear proyecto en [Firebase Console](https://console.firebase.google.com)
-2. Agregar app Android con package name `com.carpoolapp`
-3. Descargar `google-services.json` y copiar a `app/google-services.json`
-4. Activar servicios:
-    - **Authentication** → Sign-in method → **Email/Password** y **Google**
-   - **Firestore Database** → Create database → modo test (ajustar reglas después)
-5. Crear los índices compuestos en Firestore (ver `docs/firebase.md`)
-
-### 2. Emulador Firebase (desarrollo local)
-
-```bash
-# Instalar Firebase CLI
-npm install -g firebase-tools
-
-# Iniciar emuladores
+```powershell
 cd CarpoolApp
-firebase emulators:start
+.\gradlew installDebug
 ```
 
-La app en modo debug se conecta automáticamente a los emuladores (`10.0.2.2:8080` para Firestore, `10.0.2.2:9099` para Auth).
+2) Reiniciar la app o abrir en el emulador:
 
-### 3. Build
+```powershell
+adb -s emulator-5554 shell am force-stop com.carpoolapp
+adb -s emulator-5554 shell am start -n com.carpoolapp/.MainActivity
+```
+
+3) Ver logs filtrados (útil para validar optimistic UI y collectors):
+
+```powershell
+adb -s emulator-5554 logcat -v time ViajeRepo:D MisViajesVM:D Firestore:V *:S
+```
+
+4) Para pruebas con dos emuladores (dos cuentas):
+
+```powershell
+# listar AVDs
+%CANDROID_SDK_ROOT%\\emulator\\emulator.exe -list-avds
+
+# iniciar AVD con puerto alterno (ej. 5556)
+%CANDROID_SDK_ROOT%\\emulator\\emulator.exe -avd NombreDelAVD -port 5556 -netdelay none -netspeed full
+
+# instalar APK en el segundo emulador
+adb -s emulator-5556 install -r app\\build\\outputs\\apk\\debug\\app-debug.apk
+
+# logcat del segundo emulador
+adb -s emulator-5556 logcat -v time ViajeRepo:D MisViajesVM:D Firestore:V *:S
+```
+
+5) Qué buscar en los logs (pégalo en la conversación si pides ayuda):
+
+- `D/ViajeRepo: emitted created event id=...`  (repo registró emisión optimista)
+- `D/MisViajesVM: Received created event for uid=... id=...`  (ViewModel recibió evento optimista)
+- `FAILED_PRECONDITION` (falta índice para collectionGroup → revisar `firestore.indexes.json`/Console)
+- `PERMISSION_DENIED` (reglas Firestore no publicadas o mal configuradas)
+
+## Firestore — reglas e índices
+
+- Reglas sugeridas para staging: `CarpoolApp/firestore.rules.copy` (pégalas y publica en Firebase Console para entornos de staging).
+- Índices compuestos: `firestore.indexes.json` incluido. Deploy con:
 
 ```bash
-./gradlew build          # Build completo
-./gradlew test           # Tests unitarios
+firebase deploy --only firestore:indexes --project <your-project-id>
 ```
 
-## Modelo de Datos (Firestore)
+Verificar en la consola que el índice `collectionGroup` esté en estado `READY` antes de ejecutar queries que lo necesiten.
 
-```
-/users/{userId}
-/trips/{tripId}
-/trips/{tripId}/requests/{requestId}
-```
+## Problemas conocidos y soluciones rápidas
 
-Ver esquema detallado en `docs/firebase.md`.
+- Problema: `collectionGroup` queries lanzaban `FAILED_PRECONDITION` y pueden cancelar collectors.
+    - Solución: crear índice en Firebase Console o con `firebase deploy` y esperar a que compile (READY).
+- Problema: `PERMISSION_DENIED` al leer/escribir.
+    - Solución: publicar `firestore.rules.copy` o ajustar reglas de acuerdo al entorno.
+- Problema: emitted event en repo pero no recibido por ViewModel.
+    - Causas comunes: versión de la app en el emulador no actualizada (reinstalar con `installDebug`), collector cancelado por excepción (patchado en `MisViajesViewModel`), o race-condition de arranque.
 
-## Pantallas
+## Qué revisar si algo falla (checklist rápido)
 
-| Pantalla       | Fragment                  | Descripción                                    |
-|----------------|---------------------------|------------------------------------------------|
-| Login          | `AuthFragment`            | Email/contraseña + Google → Firebase Auth      |
-| Home / Feed    | `HomeFragment`            | Listener Firestore en tiempo real              |
-| Publicar viaje | `PublicarViajeFragment`   | Formulario → escribe en Firestore              |
-| Buscar viaje   | `BuscarViajeFragment`     | Búsqueda por destino                           |
-| Detalle viaje  | `ViajeDetalleFragment`    | Info + botón solicitar                         |
-| Mis viajes     | `MisViajesFragment`       | Tabs: conductor / pasajero                     |
-| Solicitudes    | `SolicitudesFragment`     | Conductor acepta/rechaza (Transaction)         |
-| Perfil         | `PerfilFragment`          | Datos personales y vehículo                    |
+1. Reinstalar APK: `./gradlew installDebug`.
+2. Ver logs en el emulador (pasos arriba). Pegar las líneas relevantes.
+3. Verificar índices en Firebase Console (`collectionGroup` → READY).
+4. Verificar reglas publicadas (Firestore → Rules).
+5. Confirmar que el `ViajeRepositoryImpl` no se instancia múltiples veces inesperadamente (Hilt scope: singleton por diseño).
 
-## Reglas de Negocio
+## Archivos importantes a revisar
 
-- **Rol dual**: cualquier usuario puede publicar viajes y ser pasajero
-- **Sin pago**: la app solo coordina rutas
-- **Cupo limitado**: `Transaction` de Firestore al aceptar solicitud
-- **Solicitud única**: un pasajero no puede solicitar dos veces el mismo viaje
-- **IDs**: Firestore genera IDs como `String`
+- `app/src/main/java/com/carpoolapp/data/repository/ViajeRepositoryImpl.kt` — emisión optimista con `MutableSharedFlow`.
+- `app/src/main/java/com/carpoolapp/ui/mis_viajes/MisViajesViewModel.kt` — collectors aislados, manejo de errores.
+- `CarpoolApp/firestore.rules.copy` — reglas sugeridas para staging (pegar en Console).
+- `firestore.indexes.json` — índices Firestore.
+- `app/src/main/java/com/carpoolapp/data/remote/firestore/FirestoreViajeDataSource.kt` — queries que usan `collectionGroup`.
 
-## Documentación
+---
 
-- `docs/firebase.md` — Configuración completa de Firebase
-- `docs/quality.md` — Estrategia de testing y calidad
-- `docs/security.md` — Medidas de seguridad
-- `prompts/` — Prompts y skills para desarrollo asistido
+Si quieres, creo un archivo `DEV_STATUS.md` con este resumen en la raíz del repo (no lo añadiré sin tu confirmación). También puedo abrir los logs en ambos emuladores y capturar una sesión si quieres continuar ahora.
+
+Gracias — listo para seguir cuando digas.
