@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
     alias(libs.plugins.google.services)
+    alias(libs.plugins.crashlytics)
     alias(libs.plugins.hilt)
     alias(libs.plugins.navigation.safe.args)
 }
@@ -55,11 +56,16 @@ dependencies {
     // Custom Tabs for OAuth
     implementation(libs.chrome.custom.tabs)
 
+    // Google Sign-In
+    implementation(libs.play.services.auth)
+
     // Firebase BOM
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.messaging)
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
 
     // Room
     implementation(libs.room.runtime)

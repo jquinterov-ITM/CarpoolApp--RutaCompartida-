@@ -29,6 +29,15 @@ app/src/main/java/com/carpoolapp/
 └── ui/
         ├── mis_viajes/     # ViewModel y Fragment claves para collectors
         └── publicar/       # PublicarViajeFragment / ViewModel
+    ├── auth/                  # Login con correo/contraseña + Google
+    ├── home/                  # Feed de viajes en tiempo real
+    ├── publicar/              # Formulario para crear viaje
+    ├── buscar/                # Búsqueda por destino
+    ├── detalle/               # Detalle del viaje + solicitar
+    ├── mis_viajes/            # Viajes como conductor/pasajero
+    ├── solicitudes/           # Conductor acepta/rechaza
+    ├── perfil/                # Perfil del usuario
+    └── common/                # BaseFragment, utilidades
 ```
 
 ## Cómo probar rápidamente (pasos reproducibles)

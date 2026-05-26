@@ -2,6 +2,7 @@ package com.carpoolapp.data.seed
 
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
+import com.carpoolapp.data.remote.firestore.firestoreSafe
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -11,7 +12,13 @@ class DataSeeder @Inject constructor(
     private val firestore: FirebaseFirestore
 ) {
     suspend fun seedIfEmpty() {
-        val existing = firestore.collection("trips").limit(1).get().await()
+        val existing = firestoreSafe("DataSeeder", null as com.google.firebase.firestore.QuerySnapshot?) {
+            firestore.collection("trips").limit(1).get().await()
+        }
+        if (existing == null) {
+            println("DataSeeder: no se pudo comprobar existencia de datos")
+            return
+        }
         if (existing.documents.isNotEmpty()) return // Ya hay datos
 
         val otherUserId = "demo-conductor-001"
@@ -83,5 +90,33 @@ class DataSeeder @Inject constructor(
             batch.set(ref, trip)
         }
         batch.commit().await()
+    }
+
+    suspend fun seedRequestForUser(pasajeroId: String) {
+        // Check if user already has a request
+        val existing = firestoreSafe("DataSeeder-req", null as com.google.firebase.firestore.QuerySnapshot?) {
+            firestore.collectionGroup("requests").whereEqualTo("pasajeroId", pasajeroId).limit(1).get().await()
+        }
+        if (existing == null) return
+        if (existing.documents.isNotEmpty()) return
+
+        // Find any trip to attach the request to
+        val tripSnap = firestoreSafe("DataSeeder-trip", null as com.google.firebase.firestore.QuerySnapshot?) {
+            firestore.collection("trips").limit(1).get().await()
+        }
+        if (tripSnap == null) return
+        val tripDoc = tripSnap.documents.firstOrNull() ?: return
+
+        val request = mapOf(
+            "pasajeroId" to pasajeroId,
+            "estado" to "PENDIENTE",
+            "createdAt" to com.google.firebase.Timestamp.now()
+        )
+
+        try {
+            tripDoc.reference.collection("requests").add(request).await()
+        } catch (_: Exception) {
+            // ignore on debug seeding
+        }
     }
 }

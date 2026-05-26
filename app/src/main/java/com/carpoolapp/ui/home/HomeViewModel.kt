@@ -31,10 +31,7 @@ class HomeViewModel @Inject constructor(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            viajeRepository.seedDemoDataIfNeeded()
-            cargarFeed()
-        }
+        cargarFeed()
     }
 
     fun cargarFeed() {
@@ -44,13 +41,26 @@ class HomeViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            getFeedUseCase(usuarioId)
-                .catch { e ->
-                    _uiState.value = HomeUiState.Error(e.message ?: "Error al cargar viajes")
-                }
-                .collect { viajes ->
-                    _uiState.value = HomeUiState.Success(viajes)
-                }
+            try {
+                getFeedUseCase(usuarioId)
+                    .catch { e ->
+                        _uiState.value = HomeUiState.Error(mapToUserMessage(e.message))
+                    }
+                    .collect { viajes ->
+                        _uiState.value = HomeUiState.Success(viajes)
+                    }
+            } catch (e: Exception) {
+                _uiState.value = HomeUiState.Error(mapToUserMessage(e.message))
+            }
+        }
+    }
+
+    private fun mapToUserMessage(rawMessage: String?): String {
+        val message = rawMessage.orEmpty()
+        return if (message.contains("PERMISSION_DENIED", ignoreCase = true)) {
+            "No tienes permisos para leer los viajes en Firestore. Verifica reglas y usuario autenticado."
+        } else {
+            rawMessage ?: "Error al cargar viajes"
         }
     }
 }

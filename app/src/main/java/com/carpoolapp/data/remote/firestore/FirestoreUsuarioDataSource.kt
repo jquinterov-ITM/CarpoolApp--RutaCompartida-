@@ -17,7 +17,7 @@ class FirestoreUsuarioDataSource @Inject constructor(
     fun getUsuario(userId: String): Flow<UsuarioDto?> = callbackFlow {
         val listener = collection.document(userId)
             .addSnapshotListener { snapshot, error ->
-                if (error != null) { close(error); return@addSnapshotListener }
+                if (error != null) { close(); return@addSnapshotListener }
                 val usuario = snapshot?.toObject<UsuarioDto>()?.copy(id = snapshot.id)
                 trySend(usuario)
             }
@@ -25,14 +25,20 @@ class FirestoreUsuarioDataSource @Inject constructor(
     }
 
     suspend fun guardar(dto: UsuarioDto) {
-        collection.document(dto.id).set(dto).await()
+        firestoreSafe("FirestoreUsuarioDS", Unit) {
+            collection.document(dto.id).set(dto).await()
+        }
     }
 
     suspend fun actualizarVehiculo(userId: String, vehiculo: String) {
-        collection.document(userId).update("vehiculo", vehiculo).await()
+        firestoreSafe("FirestoreUsuarioDS", Unit) {
+            collection.document(userId).update("vehiculo", vehiculo).await()
+        }
     }
 
     suspend fun actualizarFcmToken(userId: String, token: String) {
-        collection.document(userId).update("fcmToken", token).await()
+        firestoreSafe("FirestoreUsuarioDS", Unit) {
+            collection.document(userId).update("fcmToken", token).await()
+        }
     }
 }
