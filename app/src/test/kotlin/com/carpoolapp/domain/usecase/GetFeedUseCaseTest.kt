@@ -28,6 +28,7 @@ class GetFeedUseCaseTest {
         override fun getViajesPorConductor(conductorId: String) = flowOf(emptyList<Viaje>())
         override suspend fun getViajesComoPasajero(pasajeroId: String): List<Viaje> = emptyList()
         override suspend fun crear(viaje: Viaje): String = ""
+        override fun createdEvents(): Flow<Viaje> = kotlinx.coroutines.flow.emptyFlow()
         override suspend fun actualizarEstado(viajeId: String, estado: ViajeEstado) {}
         override suspend fun seedDemoDataIfNeeded() {}
     }

@@ -55,12 +55,9 @@ service cloud.firestore {
       }
     }
 
-    // Permitir lecturas por collectionGroup para que los pasajeros puedan listar
-    // sus solicitudes sin depender de la ruta completa del documento padre.
-    // Esto evita PERMISSION_DENIED en consultas collectionGroup("requests").
+    // Regla para collectionGroup("requests") - permite a pasajeros leer sus solicitudes
     match /{document=**}/requests/{requestId} {
       allow read: if request.auth != null && resource.data.pasajeroId == request.auth.uid;
-      // Crear/actualizar/eliminar siguen controlados por la regla específica dentro de /trips/{tripId}
     }
 
     // Denegar todo lo demás por defecto

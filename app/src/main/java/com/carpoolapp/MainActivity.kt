@@ -30,8 +30,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navHostTagMap: Map<Int, String>
     private var currentItemIdField: Int = R.id.homeFragment
     private var authStateListener: FirebaseAuth.AuthStateListener? = null
-    // Prevent repeated recreate calls from auth state flapping
-    private var authRecreatePending: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -126,19 +124,9 @@ class MainActivity : AppCompatActivity() {
                     } catch (_: Exception) { }
                 }
             } else {
-                // user signed in -> initialize tab navigation.
-                // Temporarily skip calling `recreate()` to avoid repeated relaunch loops
-                // observed on some emulator sessions while debugging Firestore indexes.
-                if (!authRecreatePending) {
-                    authRecreatePending = true
-                    lifecycleScope.launchWhenResumed {
-                        try {
-                            android.util.Log.d("MainActivity", "Skipping recreate() (debug)")
-                        } finally {
-                            authRecreatePending = false
-                        }
-                    }
-                }
+                // User already authenticated, tab navigation already set up in onCreate.
+                // No recreate() needed - it was causing navigation issues.
+                android.util.Log.d("MainActivity", "User authenticated, navigation ready")
             }
         }
         firebaseAuth.addAuthStateListener(authStateListener!!)

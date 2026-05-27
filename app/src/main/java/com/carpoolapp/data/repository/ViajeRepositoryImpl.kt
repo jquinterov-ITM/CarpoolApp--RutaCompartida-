@@ -38,17 +38,7 @@ class ViajeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getViajesComoPasajero(pasajeroId: String): List<Viaje> {
-        return try {
-            dataSource.getViajesPorPasajero(pasajeroId).map { it.toDomain() }
-        } catch (e: com.google.firebase.firestore.FirebaseFirestoreException) {
-            if (e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.FAILED_PRECONDITION) {
-                android.util.Log.w("ViajeRepo", "Firestore FAILED_PRECONDITION for pasajeroId - returning empty list", e)
-                emptyList()
-            } else throw e
-        } catch (e: Exception) {
-            android.util.Log.w("ViajeRepo", "Error fetching viajes como pasajero", e)
-            emptyList()
-        }
+        return dataSource.getViajesPorPasajero(pasajeroId).map { it.toDomain() }
     }
 
     override suspend fun crear(viaje: Viaje): String {

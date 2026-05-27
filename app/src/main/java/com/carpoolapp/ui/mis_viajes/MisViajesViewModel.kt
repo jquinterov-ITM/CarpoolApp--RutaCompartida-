@@ -15,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import javax.inject.Inject
-import kotlinx.coroutines.delay
 
 sealed class MisViajesUiState {
     object Loading : MisViajesUiState()
@@ -39,12 +38,6 @@ class MisViajesViewModel @Inject constructor(
         cargar()
     }
 
-    // Simple in-memory cache to avoid repeatedly calling pasajero queries which
-    // can fail with FAILED_PRECONDITION while an index is missing or building.
-    private var _lastComoPasajero: List<Viaje> = emptyList()
-    private var _lastComoPasajeroAt: Long = 0L
-    private val COMO_PASAJERO_CACHE_MS = 5_000L
-
     fun cargar() {
             // Cancel previous collectors before starting new ones.
             try {
@@ -59,15 +52,6 @@ class MisViajesViewModel @Inject constructor(
             if (uid == null) {
                 _uiState.value = MisViajesUiState.Error("Inicia sesion para ver viajes")
                 return
-            }
-
-            // timeout fallback: if after 8s still loading, show error so UI doesn't stay bloqueada
-            viewModelScope.launch {
-                delay(8000)
-                if (_uiState.value is MisViajesUiState.Loading) {
-                    Log.w("MisViajesVM", "Timeout cargando viajes para uid=$uid")
-                    _uiState.value = MisViajesUiState.Error("No se pudo cargar viajes. Reintenta.")
-                }
             }
 
             val comoConductor = mutableListOf<Viaje>()
@@ -111,28 +95,10 @@ class MisViajesViewModel @Inject constructor(
             }
     }
 
-    private var _collectJob: Job? = null
     private var _conductorJob: Job? = null
     private var _createdEventsJob: Job? = null
 
     private suspend fun fetchComoPasajeroOnce(uid: String): List<Viaje> {
-        val now = System.currentTimeMillis()
-        if (now - _lastComoPasajeroAt <= COMO_PASAJERO_CACHE_MS) return _lastComoPasajero
-        return try {
-            val list = viajeRepository.getViajesComoPasajero(uid)
-            _lastComoPasajero = list
-            _lastComoPasajeroAt = now
-            list
-        } catch (e: com.google.firebase.firestore.FirebaseFirestoreException) {
-            if (e.code == com.google.firebase.firestore.FirebaseFirestoreException.Code.FAILED_PRECONDITION) {
-                Log.w("MisViajesVM", "Firestore index missing (pasajeroId) — returning cached/empty list", e)
-                _lastComoPasajeroAt = now
-                _lastComoPasajero
-            } else throw e
-        } catch (e: Exception) {
-            Log.w("MisViajesVM", "Error fetching comoPasajero", e)
-            _lastComoPasajeroAt = now
-            _lastComoPasajero
-        }
+        return viajeRepository.getViajesComoPasajero(uid)
     }
 }
