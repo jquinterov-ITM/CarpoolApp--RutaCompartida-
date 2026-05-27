@@ -3,6 +3,7 @@ package com.carpoolapp.ui.perfil
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.carpoolapp.domain.model.Usuario
+import com.carpoolapp.domain.model.Vehiculo
 import com.carpoolapp.domain.repository.UsuarioRepository
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,8 @@ sealed class PerfilUiState {
     data class Success(val usuario: Usuario) : PerfilUiState()
     data class Error(val mensaje: String) : PerfilUiState()
     object VehiculoActualizado : PerfilUiState()
+    object FotoActualizada : PerfilUiState()
+    object ConductorActualizado : PerfilUiState()
 }
 
 @HiltViewModel
@@ -48,12 +51,36 @@ class PerfilViewModel @Inject constructor(
         }
     }
 
-    fun actualizarVehiculo(vehiculo: String) {
+    fun actualizarVehiculo(vehiculo: Vehiculo) {
         val uid = auth.currentUser?.uid ?: return
         viewModelScope.launch {
             try {
                 usuarioRepository.actualizarVehiculo(uid, vehiculo)
                 _uiState.value = PerfilUiState.VehiculoActualizado
+            } catch (e: Exception) {
+                _uiState.value = PerfilUiState.Error(e.message ?: "Error al actualizar")
+            }
+        }
+    }
+
+    fun actualizarFotoUrl(fotoUrl: String) {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                usuarioRepository.actualizarFotoUrl(uid, fotoUrl)
+                _uiState.value = PerfilUiState.FotoActualizada
+            } catch (e: Exception) {
+                _uiState.value = PerfilUiState.Error(e.message ?: "Error al actualizar foto")
+            }
+        }
+    }
+
+    fun toggleEsConductor(esConductor: Boolean) {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                usuarioRepository.actualizarEsConductor(uid, esConductor)
+                _uiState.value = PerfilUiState.ConductorActualizado
             } catch (e: Exception) {
                 _uiState.value = PerfilUiState.Error(e.message ?: "Error al actualizar")
             }

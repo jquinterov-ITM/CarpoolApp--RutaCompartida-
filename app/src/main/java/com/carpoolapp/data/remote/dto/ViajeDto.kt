@@ -10,8 +10,13 @@ data class ViajeDto(
     val destino: String = "",
     val fechaHora: Timestamp = Timestamp.now(),
     val asientosDisponibles: Int = 0,
+    val asientosTotales: Int = 0,
+    val precio: Double? = null,
+    val descripcion: String = "",
+    val pasajeroIds: List<String> = emptyList(),
     val tipo: String = "PROGRAMADO",
     val estado: String = "PROGRAMADO",
+    val vehiculoConductor: VehiculoDto? = null,
     val createdAt: Timestamp = Timestamp.now()
 ) {
     companion object {
@@ -23,8 +28,22 @@ data class ViajeDto(
             destino = map["destino"] as? String ?: "",
             fechaHora = map["fechaHora"] as? Timestamp ?: Timestamp.now(),
             asientosDisponibles = (map["asientosDisponibles"] as? Long)?.toInt() ?: 0,
+            asientosTotales = (map["asientosTotales"] as? Long)?.toInt() ?: 0,
+            precio = (map["precio"] as? Double) ?: (map["precio"] as? Long)?.toDouble(),
+            descripcion = map["descripcion"] as? String ?: "",
+            pasajeroIds = (map["pasajeroIds"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
             tipo = map["tipo"] as? String ?: "PROGRAMADO",
             estado = map["estado"] as? String ?: "PROGRAMADO",
+            vehiculoConductor = (map["vehiculoConductor"] as? Map<*, *>)?.let { data ->
+                VehiculoDto(
+                    marca = data["marca"] as? String ?: "",
+                    modelo = data["modelo"] as? String ?: "",
+                    ano = (data["ano"] as? Long)?.toInt() ?: 0,
+                    color = data["color"] as? String ?: "",
+                    placa = data["placa"] as? String ?: "",
+                    fotoUrl = data["fotoUrl"] as? String?
+                )
+            },
             createdAt = map["createdAt"] as? Timestamp ?: Timestamp.now()
         )
     }

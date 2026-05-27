@@ -84,10 +84,10 @@ class AuthViewModel @Inject constructor(
                 val user = result.user ?: throw Exception("Usuario nulo")
                 val nombre = user.displayName?.takeIf { it.isNotBlank() } ?: user.email?.substringBefore("@") ?: "Usuario"
                 val email = user.email ?: ""
-                val usuario = Usuario(id = user.uid, nombre = nombre, email = email)
+                val fotoUrl = user.photoUrl?.toString()
+                val usuario = Usuario(id = user.uid, nombre = nombre, email = email, fotoUrl = fotoUrl)
                 try { usuarioRepository.guardar(usuario) } catch (_: Exception) {}
                 try { dataSeeder.seedIfEmpty() } catch (_: Exception) {}
-                // In debug builds, seed a request for the Google signed-in user to help UI testing
                 try { dataSeeder.seedRequestForUser(user.uid) } catch (_: Exception) {}
                 _uiState.value = AuthUiState.Autenticado(usuario)
             } catch (e: Exception) {

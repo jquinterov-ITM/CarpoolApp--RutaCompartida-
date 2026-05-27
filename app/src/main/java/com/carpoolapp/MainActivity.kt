@@ -1,10 +1,17 @@
 package com.carpoolapp
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
@@ -12,7 +19,6 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.NavigationUI
 import androidx.navigation.ui.setupWithNavController
 import com.google.firebase.auth.FirebaseAuth
-import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import com.carpoolapp.databinding.ActivityMainBinding
 import javax.inject.Inject
@@ -40,6 +46,9 @@ class MainActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         )
+        
+        // Manejar deep link desde notificación
+        handleNotificationIntent(intent)
 
         val isAuthenticated = firebaseAuth.currentUser != null
         val useTabNavigation = isAuthenticated
@@ -133,6 +142,8 @@ class MainActivity : AppCompatActivity() {
 
         if (useTabNavigation) {
             // Tab-based navigation setup
+            requestNotificationPermission()
+            
             val listenerMap = mutableMapOf<Int, NavController.OnDestinationChangedListener>()
 
             fun showTab(menuId: Int) {
@@ -199,8 +210,34 @@ class MainActivity : AppCompatActivity() {
         authStateListener?.let { firebaseAuth.removeAuthStateListener(it) }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleNotificationIntent(intent)
+    }
+    
+    private fun handleNotificationIntent(intent: Intent) {
+        val navigateToTrip = intent.getBooleanExtra("navigateToTrip", false)
+        val tripId = intent.getStringExtra("tripId")
+        
+        if (navigateToTrip && tripId != null) {
+            lifecycleScope.launchWhenResumed {
+                val currentNav = navControllerRef
+                if (currentNav != null) {
+                    try {
+                        val action = com.carpoolapp.ui.home.HomeFragmentDirections.actionHomeToDetalle(
+                            tripId = tripId,
+                            esConductor = true
+                        )
+                        currentNav.navigate(action)
+                    } catch (e: Exception) {
+                        android.util.Log.e("MainActivity", "Error navigating to trip: ${e.message}")
+                    }
+                }
+            }
+        }
+    }
+
     override fun onBackPressed() {
-        // Try pop current nav controller
         val currentTag = navHostTagMap[currentItemIdField]
         if (currentTag != null) {
             val fragment = supportFragmentManager.findFragmentByTag(currentTag) as? NavHostFragment
@@ -210,23 +247,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // If can't pop and have previous tab, go to it
         if (tabBackStack.isNotEmpty()) {
             val previous = tabBackStack.removeLast()
             binding.bottomNavigation.selectedItemId = previous
-            // showTab will be triggered by listener
             return
         }
 
-        // Default behavior
         super.onBackPressed()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt("currentItemId", currentItemIdField)
-        // save tabBackStack as int array
         val arr = tabBackStack.toIntArray()
         outState.putIntArray("tabBackStack", arr)
+    }
+    
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1001
+                )
+            }
+        }
     }
 }

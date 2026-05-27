@@ -16,8 +16,8 @@ android {
         applicationId = "com.carpoolapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "beta 0.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -96,6 +96,9 @@ dependencies {
     implementation(libs.recyclerview)
     implementation(libs.cardview)
     implementation(libs.swiperefreshlayout)
+    
+    // Coil para carga de imágenes
+    implementation("io.coil-kt:coil:2.5.0")
 
     // Tests unitarios
     testImplementation(libs.junit)

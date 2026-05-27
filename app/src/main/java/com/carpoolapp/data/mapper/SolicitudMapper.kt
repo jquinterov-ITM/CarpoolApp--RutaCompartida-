@@ -14,15 +14,28 @@ fun SolicitudDto.toDomain(tripId: String = ""): Solicitud {
     
     return Solicitud(
         id = id,
-        tripId = tripId,
+        tripId = if (tripId.isNotEmpty()) tripId else this.tripId,
         pasajeroId = pasajeroId,
         pasajeroNombre = pasajeroNombre,
-        estado = solicitudEstado
+        pasajeroEmail = pasajeroEmail,
+        pasajeroPhone = pasajeroPhone,
+        pasajeroCalificacion = pasajeroCalificacion,
+        asientosSolicitados = asientosSolicitados,
+        mensaje = mensaje,
+        estado = solicitudEstado,
+        createdAt = createdAt.toDate().time
     )
 }
 
 fun Solicitud.toDto(): SolicitudDto = SolicitudDto(
+    tripId = tripId,
     pasajeroId = pasajeroId,
     pasajeroNombre = pasajeroNombre,
-    estado = estado.name
+    pasajeroEmail = pasajeroEmail,
+    pasajeroPhone = pasajeroPhone,
+    pasajeroCalificacion = pasajeroCalificacion,
+    asientosSolicitados = asientosSolicitados,
+    mensaje = mensaje,
+    estado = estado.name,
+    createdAt = if (createdAt > 0L) com.google.firebase.Timestamp(java.util.Date(createdAt)) else com.google.firebase.Timestamp.now()
 )

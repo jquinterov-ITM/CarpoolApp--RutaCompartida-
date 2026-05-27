@@ -1,6 +1,8 @@
 package com.carpoolapp.data.mapper
 
 import com.carpoolapp.data.remote.dto.ViajeDto
+import com.carpoolapp.domain.model.toDomain
+import com.carpoolapp.domain.model.toDto
 import com.carpoolapp.domain.model.TipoViaje
 import com.carpoolapp.domain.model.Viaje
 import com.carpoolapp.domain.model.ViajeEstado
@@ -28,19 +30,30 @@ fun ViajeDto.toDomain(): Viaje {
         destino = destino,
         fechaHora = fechaHora.toDate().time,
         asientosDisponibles = asientosDisponibles,
+        asientosTotales = asientosTotales,
+        precio = precio,
+        descripcion = descripcion,
+        pasajeroIds = pasajeroIds,
         tipo = tipoViaje,
-        estado = viajeEstado
+        estado = viajeEstado,
+        vehiculoConductor = vehiculoConductor?.toDomain()
     )
 }
 
 fun Viaje.toDto(): ViajeDto = ViajeDto(
+    id = id,
     conductorId = conductorId,
     conductorNombre = conductorNombre,
     origen = origen,
     destino = destino,
     asientosDisponibles = asientosDisponibles,
+    asientosTotales = asientosTotales,
+    precio = precio,
+    descripcion = descripcion,
+    pasajeroIds = pasajeroIds,
     tipo = tipo.name,
     estado = estado.name,
+    vehiculoConductor = vehiculoConductor?.toDto(),
     fechaHora = if (fechaHora > 0L) com.google.firebase.Timestamp(java.util.Date(fechaHora)) else com.google.firebase.Timestamp.now(),
     createdAt = com.google.firebase.Timestamp.now()
 )

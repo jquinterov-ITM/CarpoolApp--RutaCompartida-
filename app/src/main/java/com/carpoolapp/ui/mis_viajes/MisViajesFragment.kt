@@ -92,6 +92,7 @@ class MisViajesFragment : BaseFragment<FragmentMisViajesBinding>() {
         super.onResume()
         // Force reload when fragment becomes visible again (e.g., after publishing a trip)
         viewModel.cargar()
+        viewModel.crearCanalNotificacion()
     }
 
     private fun buildItems(state: MisViajesUiState.Success): List<MisViajeItem> {
@@ -184,8 +185,8 @@ class MisViajesAdapter(
                     com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> {
                         root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_programado
                     }
-                    com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> {
-                        root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_activo
+                    com.carpoolapp.domain.model.ViajeEstado.ACTIVO, com.carpoolapp.domain.model.ViajeEstado.EN_PROGRESO -> {
+                        root.context.getColor(R.color.on_secondary) to R.drawable.bg_estado_activo
                     }
                     com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> {
                         root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_completado

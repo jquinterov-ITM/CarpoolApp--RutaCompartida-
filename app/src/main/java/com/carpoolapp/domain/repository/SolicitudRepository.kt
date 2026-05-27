@@ -9,4 +9,5 @@ interface SolicitudRepository {
     suspend fun enviar(tripId: String, solicitud: Solicitud)
     suspend fun aceptar(tripId: String, requestId: String)
     suspend fun rechazar(tripId: String, requestId: String)
+    suspend fun cancelarSolicitud(tripId: String, solicitudId: String)
 }

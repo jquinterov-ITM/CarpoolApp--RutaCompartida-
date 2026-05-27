@@ -6,18 +6,11 @@ data class UsuarioDto(
     val id: String = "",
     val nombre: String = "",
     val email: String = "",
-    val vehiculo: String? = null,
+    val fotoUrl: String? = null,
+    val vehiculo: VehiculoDto? = null,
+    val esConductor: Boolean = false,
+    val calificacion: Double = 5.0,
+    val viajesCompletados: Int = 0,
     val fcmToken: String? = null,
-    val createdAt: Timestamp = Timestamp.now()
-) {
-    companion object {
-        fun fromDocument(id: String, map: Map<String, Any?>): UsuarioDto = UsuarioDto(
-            id = id,
-            nombre = map["nombre"] as? String ?: "",
-            email = map["email"] as? String ?: "",
-            vehiculo = map["vehiculo"] as? String?,
-            fcmToken = map["fcmToken"] as? String?,
-            createdAt = map["createdAt"] as? Timestamp ?: Timestamp.now()
-        )
-    }
-}
+    val createdAt: com.google.firebase.Timestamp = com.google.firebase.Timestamp.now()
+)

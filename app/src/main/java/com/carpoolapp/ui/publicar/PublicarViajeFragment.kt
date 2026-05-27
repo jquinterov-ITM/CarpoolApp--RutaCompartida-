@@ -51,6 +51,7 @@ class PublicarViajeFragment : BaseFragment<FragmentPublicarViajeBinding>() {
             val origen = binding.origenInput.text.toString().trim()
             val destino = binding.destinoInput.text.toString().trim()
             val asientos = binding.asientosInput.text.toString().toIntOrNull() ?: 0
+            val descripcion = binding.descripcionInput.text.toString().trim()
             val tipo = if (binding.btnInmediato.isChecked) TipoViaje.INMEDIATO else TipoViaje.PROGRAMADO
             val fechaHora = if (tipo == TipoViaje.PROGRAMADO) selectedFechaHora else 0L
 
@@ -67,7 +68,7 @@ class PublicarViajeFragment : BaseFragment<FragmentPublicarViajeBinding>() {
                 Toast.makeText(requireContext(), "Selecciona fecha y hora para un viaje programado", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            viewModel.publicar(origen, destino, asientos, tipo, fechaHora)
+            viewModel.publicar(origen, destino, asientos, asientos, 0.0, descripcion, tipo, fechaHora)
         }
 
         // Date/time picker handling

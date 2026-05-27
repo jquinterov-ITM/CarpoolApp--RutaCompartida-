@@ -26,8 +26,22 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
                 destino = data["destino"] as? String ?: "",
                 fechaHora = data["fechaHora"] as? com.google.firebase.Timestamp ?: com.google.firebase.Timestamp.now(),
                 asientosDisponibles = (data["asientosDisponibles"] as? Long)?.toInt() ?: 0,
+                asientosTotales = (data["asientosTotales"] as? Long)?.toInt() ?: 0,
+                precio = (data["precio"] as? Double) ?: (data["precio"] as? Long)?.toDouble(),
+                descripcion = data["descripcion"] as? String ?: "",
+                pasajeroIds = (data["pasajeroIds"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
                 tipo = data["tipo"] as? String ?: "PROGRAMADO",
                 estado = data["estado"] as? String ?: "PROGRAMADO",
+                vehiculoConductor = (data["vehiculoConductor"] as? Map<*, *>)?.let { v ->
+                    com.carpoolapp.data.remote.dto.VehiculoDto(
+                        marca = v["marca"] as? String ?: "",
+                        modelo = v["modelo"] as? String ?: "",
+                        ano = (v["ano"] as? Long)?.toInt() ?: 0,
+                        color = v["color"] as? String ?: "",
+                        placa = v["placa"] as? String ?: "",
+                        fotoUrl = v["fotoUrl"] as? String?
+                    )
+                },
                 createdAt = data["createdAt"] as? com.google.firebase.Timestamp ?: com.google.firebase.Timestamp.now()
             )
         } catch (e: Exception) {
@@ -139,6 +153,60 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
         }
     }
 
+    suspend fun finalizarViaje(id: String) {
+        try {
+            val updates = mapOf<String, Any>(
+                "estado" to "COMPLETADO",
+                "asientosDisponibles" to 0
+            )
+            collection.document(id).update(updates).await()
+        } catch (e: Exception) {
+            Log.w("FirestoreViajeDS", "Error finalizando viaje $id", e)
+            throw e
+        }
+    }
+
+    suspend fun agregarPasajero(viajeId: String, pasajeroId: String) {
+        try {
+            val viajeRef = collection.document(viajeId)
+            val viaje = viajeRef.get().await()
+            val pasajerosActuales = viaje.get("pasajeroIds") as? List<String> ?: emptyList()
+            
+            if (pasajerosActuales.contains(pasajeroId)) {
+                return
+            }
+            
+            val nuevosPasajeros = pasajerosActuales + pasajeroId
+            viajeRef.update("pasajeroIds", nuevosPasajeros).await()
+        } catch (e: Exception) {
+            Log.w("FirestoreViajeDS", "Error agregando pasajero $pasajeroId al viaje $viajeId", e)
+            throw e
+        }
+    }
+
+    suspend fun getViajePorId(viajeId: String): ViajeDto? {
+        return try {
+            val doc = collection.document(viajeId).get().await()
+            if (doc.exists()) {
+                documentToDto(doc.id, doc.data ?: emptyMap())
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.w("FirestoreViajeDS", "Error obteniendo viaje $viajeId", e)
+            null
+        }
+    }
+
+    suspend fun cancelarViaje(viajeId: String) {
+        try {
+            collection.document(viajeId).update("estado", "CANCELADO").await()
+        } catch (e: Exception) {
+            Log.w("FirestoreViajeDS", "Error cancelando viaje $viajeId", e)
+            throw e
+        }
+    }
+
     suspend fun seedDemoDataIfNeeded() {
         val existingCount: Int = firestoreSafe("FirestoreViajeDS", -1) {
             collection.limit(1).get().await().size()
@@ -155,6 +223,10 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
                 "destino" to "Politecnico, Ciudad de Mexico",
                 "fechaHora" to com.google.firebase.Timestamp.now(),
                 "asientosDisponibles" to 3,
+                "asientosTotales" to 4,
+                "precio" to 50.0,
+                "descripcion" to "Viaje diario al IPN, salida puntual",
+                "pasajeroIds" to emptyList<String>(),
                 "tipo" to "PROGRAMADO",
                 "estado" to "PROGRAMADO",
                 "createdAt" to com.google.firebase.Timestamp.now()
@@ -166,6 +238,10 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
                 "destino" to "Santa Fe, Ciudad de Mexico",
                 "fechaHora" to com.google.firebase.Timestamp.now(),
                 "asientosDisponibles" to 2,
+                "asientosTotales" to 3,
+                "precio" to 80.0,
+                "descripcion" to "Llevo hasta Santa Fe, paso por Insurgentes",
+                "pasajeroIds" to emptyList<String>(),
                 "tipo" to "PROGRAMADO",
                 "estado" to "PROGRAMADO",
                 "createdAt" to com.google.firebase.Timestamp.now()
@@ -177,6 +253,10 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
                 "destino" to "Centro Historico, Ciudad de Mexico",
                 "fechaHora" to com.google.firebase.Timestamp.now(),
                 "asientosDisponibles" to 4,
+                "asientosTotales" to 4,
+                "precio" to 40.0,
+                "descripcion" to "Viaje al centro, flexible con la hora",
+                "pasajeroIds" to emptyList<String>(),
                 "tipo" to "PROGRAMADO",
                 "estado" to "PROGRAMADO",
                 "createdAt" to com.google.firebase.Timestamp.now()
@@ -188,6 +268,10 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
                 "destino" to "Insurgentes, Ciudad de Mexico",
                 "fechaHora" to com.google.firebase.Timestamp.now(),
                 "asientosDisponibles" to 1,
+                "asientosTotales" to 2,
+                "precio" to 35.0,
+                "descripcion" to "Solo una persona, viaje corto",
+                "pasajeroIds" to emptyList<String>(),
                 "tipo" to "PROGRAMADO",
                 "estado" to "PROGRAMADO",
                 "createdAt" to com.google.firebase.Timestamp.now()
@@ -199,6 +283,10 @@ private fun documentToDto(id: String, data: Map<String, Any?>): ViajeDto? {
                 "destino" to "Naucalpan, Estado de Mexico",
                 "fechaHora" to com.google.firebase.Timestamp.now(),
                 "asientosDisponibles" to 2,
+                "asientosTotales" to 3,
+                "precio" to 60.0,
+                "descripcion" to "Voy hasta Plaza Satelite, paso por Perisur",
+                "pasajeroIds" to emptyList<String>(),
                 "tipo" to "PROGRAMADO",
                 "estado" to "PROGRAMADO",
                 "createdAt" to com.google.firebase.Timestamp.now()

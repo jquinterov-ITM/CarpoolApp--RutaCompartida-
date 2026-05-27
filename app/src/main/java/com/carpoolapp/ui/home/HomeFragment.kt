@@ -1,9 +1,17 @@
 package com.carpoolapp.ui.home
 
+import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -14,12 +22,20 @@ import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.carpoolapp.R
 import com.carpoolapp.databinding.FragmentHomeBinding
 import com.carpoolapp.databinding.ItemViajeBinding
+import com.carpoolapp.domain.model.TipoViaje
 import com.carpoolapp.domain.model.Viaje
+import com.carpoolapp.domain.model.ViajeEstado
 import com.carpoolapp.ui.common.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+import com.carpoolapp.MainActivity
 
 @AndroidEntryPoint
 class HomeFragment : BaseFragment<FragmentHomeBinding>() {
@@ -35,7 +51,6 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>() {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = ViajeAdapter { viaje, sharedView ->
-            // assign a stable transition name and navigate with shared element
             val transitionName = "trip_${'$'}{viaje.id}"
             sharedView.transitionName = transitionName
             val extras = FragmentNavigatorExtras(sharedView to transitionName)
@@ -74,6 +89,12 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.cargarFeed()
+        viewModel.crearCanalNotificacion()
+    }
 }
 
 class ViajeAdapter(
@@ -103,35 +124,38 @@ class ViajeAdapter(
             tvAsientos.text = "${viaje.asientosDisponibles} asientos disponibles"
             tvEstado.text = viaje.estado.name
 
+            val vehiculoInfo = viaje.vehiculoConductor?.placa?.uppercase() ?: ""
+            tvVehiculo.text = vehiculoInfo
+            tvVehiculo.visibility = if (vehiculoInfo.isNotEmpty()) View.VISIBLE else View.GONE
+
             val (textColor, bgColorRes) = when (viaje.estado) {
-                com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> {
-                    root.context.getColor(com.carpoolapp.R.color.on_primary) to com.carpoolapp.R.drawable.bg_estado_programado
+                ViajeEstado.PROGRAMADO -> {
+                    root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_programado
                 }
-                com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> {
-                    root.context.getColor(com.carpoolapp.R.color.on_primary) to com.carpoolapp.R.drawable.bg_estado_activo
+                ViajeEstado.ACTIVO, ViajeEstado.EN_PROGRESO -> {
+                    root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_activo
                 }
-                com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> {
-                    root.context.getColor(com.carpoolapp.R.color.on_primary) to com.carpoolapp.R.drawable.bg_estado_completado
+                ViajeEstado.COMPLETADO -> {
+                    root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_completado
                 }
-                com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> {
-                    root.context.getColor(com.carpoolapp.R.color.on_primary) to com.carpoolapp.R.drawable.bg_estado_cancelado
+                ViajeEstado.CANCELADO -> {
+                    root.context.getColor(R.color.on_primary) to R.drawable.bg_estado_cancelado
                 }
             }
             tvEstado.setTextColor(textColor)
             flEstadoContainer.setBackgroundResource(bgColorRes)
 
-            if (viaje.tipo == com.carpoolapp.domain.model.TipoViaje.INMEDIATO) {
-                tvFecha.text = root.context.getString(com.carpoolapp.R.string.label_inmediato)
+            if (viaje.tipo == TipoViaje.INMEDIATO) {
+                tvFecha.text = root.context.getString(R.string.label_inmediato)
             } else if (viaje.fechaHora > 0) {
-                val sdf = java.text.SimpleDateFormat("EEE, MMM d 'a las' h:mm a", java.util.Locale("es"))
-                sdf.timeZone = java.util.TimeZone.getDefault()
-                tvFecha.text = sdf.format(java.util.Date(viaje.fechaHora))
+                val sdf = SimpleDateFormat("EEE, MMM d 'a las' h:mm a", Locale("es"))
+                sdf.timeZone = TimeZone.getDefault()
+                tvFecha.text = sdf.format(Date(viaje.fechaHora))
             } else {
-                tvFecha.text = root.context.getString(com.carpoolapp.R.string.msg_fecha_desconocida)
+                tvFecha.text = root.context.getString(R.string.msg_fecha_desconocida)
                 tvFecha.visibility = View.VISIBLE
             }
 
-            // set a unique transition name for shared element transition
             root.transitionName = "trip_${'$'}{viaje.id}"
             root.setOnClickListener { onClick(viaje, root) }
         }

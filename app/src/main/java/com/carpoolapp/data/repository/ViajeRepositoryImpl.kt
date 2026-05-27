@@ -41,6 +41,14 @@ class ViajeRepositoryImpl @Inject constructor(
         return dataSource.getViajesPorPasajero(pasajeroId).map { it.toDomain() }
     }
 
+    override suspend fun getViajePorId(viajeId: String): Viaje? {
+        return dataSource.getViajePorId(viajeId)?.toDomain()
+    }
+
+    override suspend fun cancelarViaje(viajeId: String) {
+        dataSource.cancelarViaje(viajeId)
+    }
+
     override suspend fun crear(viaje: Viaje): String {
         val id = dataSource.crear(viaje.toDto())
         // emit created viaje with id so listeners can update immediately
@@ -53,6 +61,10 @@ class ViajeRepositoryImpl @Inject constructor(
 
     override suspend fun actualizarEstado(viajeId: String, estado: ViajeEstado) {
         dataSource.actualizarEstado(viajeId, estado.name)
+    }
+
+    override suspend fun finalizarViaje(viajeId: String) {
+        dataSource.finalizarViaje(viajeId)
     }
 
     override suspend fun seedDemoDataIfNeeded() {

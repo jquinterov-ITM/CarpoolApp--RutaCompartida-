@@ -224,8 +224,113 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:layout_marginTop="2dp" />
+
+                <View
+                    android:id="@+id/divider_3"
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:background="@color/divider"
+                    android:layout_marginTop="12dp"
+                    app:layout_constraintTop_toBottomOf="@id/tv_asientos"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <TextView
+                    android:id="@+id/label_vehiculo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Vehículo"
+                    android:textSize="13sp"
+                    android:textColor="@color/text_hint"
+                    android:layout_marginTop="12dp"
+                    app:layout_constraintTop_toBottomOf="@id/divider_3"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <TextView
+                    android:id="@+id/tv_vehiculo"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_primary"
+                    app:layout_constraintTop_toBottomOf="@id/label_vehiculo"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="2dp" />
             </androidx.constraintlayout.widget.ConstraintLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_descripcion"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/surface"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/route_card"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:padding="20dp"
+            android:visibility="gone">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/label_descripcion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Descripción"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <TextView
+                    android:id="@+id/tv_descripcion"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_secondary"
+                    app:layout_constraintTop_toBottomOf="@id/label_descripcion"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    android:layout_marginTop="8dp" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <TextView
+            android:id="@+id/tv_estado_solicitud"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Has solicitado este viaje"
+            android:textSize="14sp"
+            android:textColor="@color/secondary"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:padding="12dp"
+            android:background="@drawable/bg_estado"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/card_descripcion"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancelar_solicitud"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="Cancelar solicitud"
+            app:icon="@android:drawable/ic_menu_close_clear_cancel"
+            app:iconGravity="textStart"
+            app:layout_constraintTop_toBottomOf="@id/tv_estado_solicitud"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_solicitar"
@@ -234,11 +339,81 @@
             android:text="@string/btn_solicitar"
             app:icon="@android:drawable/ic_menu_send"
             app:iconGravity="textStart"
-            app:layout_constraintTop_toBottomOf="@id/route_card"
+            app:layout_constraintTop_toBottomOf="@id/card_descripcion"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:layout_marginTop="24dp"
             android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_finalizar"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="Finalizar viaje"
+            app:icon="@android:drawable/ic_menu_close_clear_cancel"
+            app:iconGravity="textStart"
+            app:layout_constraintTop_toBottomOf="@id/btn_solicitar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            app:backgroundTint="@color/error" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancelar"
+            android:layout_width="0dp"
+            android:layout_height="56dp"
+            android:text="Cancelar viaje"
+            app:icon="@android:drawable/ic_menu_delete"
+            app:iconGravity="textStart"
+            app:layout_constraintTop_toBottomOf="@id/btn_finalizar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/pasajeros_aceptados_card"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="@color/surface"
+            android:visibility="gone"
+            android:layout_marginTop="16dp"
+            app:layout_constraintTop_toBottomOf="@id/btn_cancelar"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:padding="20dp">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/tv_pasajeros_aceptados_titulo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pasajeros Aceptados"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <TextView
+                    android:id="@+id/tv_pasajeros_aceptados_lista"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintTop_toBottomOf="@id/tv_pasajeros_aceptados_titulo"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/solicitudes_card"
@@ -249,7 +424,7 @@
             app:cardBackgroundColor="@color/surface"
             android:visibility="gone"
             android:layout_marginTop="16dp"
-            app:layout_constraintTop_toBottomOf="@id/btn_solicitar"
+            app:layout_constraintTop_toBottomOf="@id/pasajeros_aceptados_card"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:padding="20dp">
