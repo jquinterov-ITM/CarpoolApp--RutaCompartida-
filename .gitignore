@@ -12,5 +12,7 @@ app/google-services.json
 app/build
 *.apk
 *.aab
+*.jks
+keystore.properties
 .env.local
 

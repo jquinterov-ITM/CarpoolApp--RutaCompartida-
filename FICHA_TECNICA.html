@@ -1,0 +1,699 @@
+
+		<head>
+			<style type="text/css" media="screen">
+				body,html{font-family:var(--markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif);font-size:var(--markdown-font-size,14px);padding:0 26px;line-height:var(--markdown-line-height,22px);word-wrap:break-word}body{padding-top:1em}h1,h2,h3,h4,h5,h6,ol,p,pre,ul{margin-top:0}h2,h3,h4,h5,h6{font-weight:400;margin-bottom:.2em}img{max-width:100%;max-height:100%}a{text-decoration:none}a:hover{text-decoration:underline}a:focus,input:focus,select:focus,textarea:focus{outline:1px solid -webkit-focus-ring-color;outline-offset:-1px}p{margin-bottom:.7em}ol,ul{margin-bottom:.7em}hr{border:0;height:2px;border-bottom:2px solid}h1{padding-bottom:.3em;line-height:1.2;border-bottom-width:1px;border-bottom-style:solid;font-weight:400}table{border-collapse:collapse}th{text-align:left;border-bottom:1px solid}td,th{padding:5px 10px}table>tbody>tr+tr>td{border-top:1px solid}blockquote{margin:0 7px 0 5px;padding:0 16px 0 10px;border-left-width:5px;border-left-style:solid}code{font-family:var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace);font-size:1em;line-height:1.357em}body.wordWrap pre{white-space:pre-wrap}pre.hljs code>div,pre:not(.hljs){padding:16px;border-radius:3px;overflow:auto}pre code{color:var(--vscode-editor-foreground);tab-size:4}
+			</style>
+		</head>
+		<body>
+			<h1 id="ficha-técnica--carpoolapp-rutacompartida">FICHA TÉCNICA — CarpoolApp (RutaCompartida)</h1>
+<h2 id="1-datos-generales">1. DATOS GENERALES</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Nombre del proyecto</strong></td>
+<td>CarpoolApp / RutaCompartida</td>
+</tr>
+<tr>
+<td><strong>Versión actual</strong></td>
+<td><code>beta 0.9</code> (versionCode: 3)</td>
+</tr>
+<tr>
+<td><strong>Package</strong></td>
+<td><code>com.carpoolapp</code></td>
+</tr>
+<tr>
+<td><strong>Lenguaje</strong></td>
+<td>Kotlin</td>
+</tr>
+<tr>
+<td><strong>Arquitectura</strong></td>
+<td>MVVM + Clean Architecture (3 capas: UI / Domain / Data)</td>
+</tr>
+<tr>
+<td><strong>Inyección de dependencias</strong></td>
+<td>Dagger Hilt</td>
+</tr>
+<tr>
+<td><strong>Build System</strong></td>
+<td>Gradle 9.0.0 + Kotlin DSL</td>
+</tr>
+<tr>
+<td><strong>Version Catalog</strong></td>
+<td><code>gradle/libs.versions.toml</code></td>
+</tr>
+</tbody></table>
+<h2 id="2-plataforma-android">2. PLATAFORMA ANDROID</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Min SDK</strong></td>
+<td>26 (Android 8.0 Oreo)</td>
+</tr>
+<tr>
+<td><strong>Target SDK</strong></td>
+<td>35</td>
+</tr>
+<tr>
+<td><strong>Compile SDK</strong></td>
+<td>35</td>
+</tr>
+<tr>
+<td><strong>Java Version</strong></td>
+<td>17</td>
+</tr>
+<tr>
+<td><strong>Kotlin Version</strong></td>
+<td>2.1.0</td>
+</tr>
+<tr>
+<td><strong>AGP (Android Gradle Plugin)</strong></td>
+<td>8.8.2</td>
+</tr>
+<tr>
+<td><strong>KSP</strong></td>
+<td>2.1.0-1.0.29</td>
+</tr>
+<tr>
+<td><strong>ViewBinding</strong></td>
+<td>Habilitado</td>
+</tr>
+<tr>
+<td><strong>ProGuard / R8</strong></td>
+<td>Habilitado en release + shrinkResources</td>
+</tr>
+</tbody></table>
+<h2 id="3-dependencias-principales">3. DEPENDENCIAS PRINCIPALES</h2>
+<h3 id="firebase-bom-33100">Firebase (BOM 33.10.0)</h3>
+<table>
+<thead>
+<tr>
+<th>Servicio</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Firebase Authentication</strong></td>
+<td>Email/Password + Google Sign-In</td>
+</tr>
+<tr>
+<td><strong>Cloud Firestore</strong></td>
+<td>Base de datos principal (colecciones: <code>trips</code>, <code>users</code>, <code>notifications</code>)</td>
+</tr>
+<tr>
+<td><strong>Cloud Messaging (FCM)</strong></td>
+<td>Notificaciones push + deep links</td>
+</tr>
+<tr>
+<td><strong>Crashlytics</strong></td>
+<td>Reporte de crashes</td>
+</tr>
+<tr>
+<td><strong>Analytics</strong></td>
+<td>Analíticas de uso</td>
+</tr>
+</tbody></table>
+<h3 id="androidx--jetpack">AndroidX / Jetpack</h3>
+<table>
+<thead>
+<tr>
+<th>Librería</th>
+<th>Versión</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Navigation (Fragment + UI + Safe Args)</td>
+<td>2.8.7</td>
+</tr>
+<tr>
+<td>Lifecycle (ViewModel + Runtime)</td>
+<td>2.8.7</td>
+</tr>
+<tr>
+<td>Room (Runtime + KTX + Compiler)</td>
+<td>2.6.1</td>
+</tr>
+<tr>
+<td>Core KTX</td>
+<td>1.15.0</td>
+</tr>
+<tr>
+<td>AppCompat</td>
+<td>1.7.0</td>
+</tr>
+<tr>
+<td>Material Design</td>
+<td>1.12.0</td>
+</tr>
+<tr>
+<td>ConstraintLayout</td>
+<td>2.2.1</td>
+</tr>
+<tr>
+<td>RecyclerView</td>
+<td>1.4.0</td>
+</tr>
+<tr>
+<td>CardView</td>
+<td>1.0.0</td>
+</tr>
+<tr>
+<td>SwipeRefreshLayout</td>
+<td>1.1.0</td>
+</tr>
+</tbody></table>
+<h3 id="otras-librerías">Otras librerías</h3>
+<table>
+<thead>
+<tr>
+<th>Librería</th>
+<th>Versión</th>
+<th>Uso</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Hilt</strong></td>
+<td>2.53.1</td>
+<td>Inyección de dependencias</td>
+</tr>
+<tr>
+<td><strong>Coroutines</strong></td>
+<td>1.9.0</td>
+<td>Programación asíncrona</td>
+</tr>
+<tr>
+<td><strong>Coil</strong></td>
+<td>2.5.0</td>
+<td>Carga de imágenes</td>
+</tr>
+<tr>
+<td><strong>OkHttp</strong></td>
+<td>4.12.0</td>
+<td>Peticiones HTTP (FCM server)</td>
+</tr>
+<tr>
+<td><strong>Play Services Auth</strong></td>
+<td>20.7.0</td>
+<td>Google Sign-In</td>
+</tr>
+<tr>
+<td><strong>Chrome Custom Tabs</strong></td>
+<td>1.7.0</td>
+<td>OAuth en navegador</td>
+</tr>
+</tbody></table>
+<h3 id="testing">Testing</h3>
+<table>
+<thead>
+<tr>
+<th>Librería</th>
+<th>Versión</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JUnit</td>
+<td>4.13.2</td>
+</tr>
+<tr>
+<td>MockK</td>
+<td>1.13.14</td>
+</tr>
+<tr>
+<td>Turbine</td>
+<td>1.2.0</td>
+</tr>
+<tr>
+<td>Espresso</td>
+<td>3.6.1</td>
+</tr>
+<tr>
+<td>Fragment Testing</td>
+<td>1.8.7</td>
+</tr>
+</tbody></table>
+<h2 id="4-firebase--configuración">4. FIREBASE — CONFIGURACIÓN</h2>
+<table>
+<thead>
+<tr>
+<th>Campo</th>
+<th>Valor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Project ID</strong></td>
+<td><code>rutacompartida-32385</code></td>
+</tr>
+<tr>
+<td><strong>Project Number</strong></td>
+<td>658053612578</td>
+</tr>
+<tr>
+<td><strong>Storage Bucket</strong></td>
+<td><code>rutacompartida-32385.firebasestorage.app</code></td>
+</tr>
+<tr>
+<td><strong>Android App ID</strong></td>
+<td><code>1:658053612578:android:298990866d5585ceb3b67b</code></td>
+</tr>
+</tbody></table>
+<h3 id="colecciones-firestore">Colecciones Firestore</h3>
+<table>
+<thead>
+<tr>
+<th>Colección</th>
+<th>Subcolección</th>
+<th>Contenido</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>trips</code></td>
+<td><code>requests</code></td>
+<td>Viajes publicados + solicitudes por viaje</td>
+</tr>
+<tr>
+<td><code>users</code></td>
+<td>—</td>
+<td>Perfiles de usuario</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td>—</td>
+<td>Registro de notificaciones push</td>
+</tr>
+</tbody></table>
+<h2 id="5-permisos">5. PERMISOS</h2>
+<table>
+<thead>
+<tr>
+<th>Permiso</th>
+<th>Justificación</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>INTERNET</code></td>
+<td>Red / Firebase</td>
+</tr>
+<tr>
+<td><code>ACCESS_FINE_LOCATION</code></td>
+<td>Geolocalización (futura)</td>
+</tr>
+<tr>
+<td><code>ACCESS_COARSE_LOCATION</code></td>
+<td>Geolocalización aproximada</td>
+</tr>
+<tr>
+<td><code>POST_NOTIFICATIONS</code></td>
+<td>Notificaciones push (Android 13+)</td>
+</tr>
+</tbody></table>
+<h2 id="6-componentes-de-la-app">6. COMPONENTES DE LA APP</h2>
+<h3 id="activity">Activity</h3>
+<table>
+<thead>
+<tr>
+<th>Clase</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MainActivity</code></td>
+<td>Host con 4 NavHostFragments por tabs + BottomNavigationView. Gestiona auth state, permisos de notificación, deep links FCM.</td>
+</tr>
+</tbody></table>
+<h3 id="fragments-7">Fragments (7)</h3>
+<table>
+<thead>
+<tr>
+<th>Fragment</th>
+<th>Tab</th>
+<th>Funcionalidad</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>AuthFragment</code></td>
+<td>—</td>
+<td>Login/Registro con Email/Password y Google Sign-In</td>
+</tr>
+<tr>
+<td><code>HomeFragment</code></td>
+<td>Home</td>
+<td>Feed de viajes activos (listener Firestore en tiempo real)</td>
+</tr>
+<tr>
+<td><code>BuscarViajeFragment</code></td>
+<td>Buscar</td>
+<td>Búsqueda de viajes por destino con filtrado en tiempo real</td>
+</tr>
+<tr>
+<td><code>ViajeDetalleFragment</code></td>
+<td>(compartido)</td>
+<td>Detalle de viaje con transición MaterialContainerTransform. Vista conductor: solicitudes; vista pasajero: solicitar/cancelar</td>
+</tr>
+<tr>
+<td><code>PublicarViajeFragment</code></td>
+<td>Home</td>
+<td>Formulario de publicación: origen, destino, asientos, tipo (inmediato/programado)</td>
+</tr>
+<tr>
+<td><code>MisViajesFragment</code></td>
+<td>Mis Viajes</td>
+<td>Viajes agrupados por secciones: conductor, pasajero, finalizados</td>
+</tr>
+<tr>
+<td><code>SolicitudesFragment</code></td>
+<td>Mis Viajes</td>
+<td>Lista de solicitudes de un viaje con aceptar/rechazar</td>
+</tr>
+<tr>
+<td><code>PerfilFragment</code></td>
+<td>Perfil</td>
+<td>Edición de perfil: avatar, nombre, toggle conductor/pasajero, formulario de vehículo, estadísticas</td>
+</tr>
+</tbody></table>
+<h3 id="viewmodels-7">ViewModels (7)</h3>
+<p>Todos usan <code>StateFlow&lt;UiState&gt;</code> + sealed classes para estados de UI.</p>
+<table>
+<thead>
+<tr>
+<th>ViewModel</th>
+<th>Estados UI</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>AuthViewModel</code></td>
+<td>Idle, Enviando, EmailEnviado, Autenticado, Error, RegistroExitoso</td>
+</tr>
+<tr>
+<td><code>HomeViewModel</code></td>
+<td>Loading, Success, Error</td>
+</tr>
+<tr>
+<td><code>BuscarViajeViewModel</code></td>
+<td>Idle, Loading, Resultado, Error</td>
+</tr>
+<tr>
+<td><code>ViajeDetalleViewModel</code></td>
+<td>Loading, Success, EnviandoSolicitud, SolicitudExitosa, Finalizando, Cancelando, Error</td>
+</tr>
+<tr>
+<td><code>PublicarViajeViewModel</code></td>
+<td>Idle, Publicando, Exitoso, Error</td>
+</tr>
+<tr>
+<td><code>MisViajesViewModel</code></td>
+<td>Loading, Success, Error</td>
+</tr>
+<tr>
+<td><code>PerfilViewModel</code></td>
+<td>Loading, Success, Error, VehiculoActualizado, FotoActualizada, NombreActualizado, ConductorActualizado</td>
+</tr>
+</tbody></table>
+<h2 id="7-capa-de-dominio">7. CAPA DE DOMINIO</h2>
+<h3 id="modelos">Modelos</h3>
+<table>
+<thead>
+<tr>
+<th>Modelo</th>
+<th>Campos clave</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Usuario</code></td>
+<td>id, nombre, email, fotoUrl, vehiculo, esConductor, calificacion, viajesCompletados</td>
+</tr>
+<tr>
+<td><code>Viaje</code></td>
+<td>id, conductorId, origen, destino, fechaHora, asientosDisponibles, precio, tipo, estado, vehiculoConductor</td>
+</tr>
+<tr>
+<td><code>Solicitud</code></td>
+<td>id, tripId, pasajeroId, asientosSolicitados, mensaje, estado, createdAt</td>
+</tr>
+<tr>
+<td><code>Vehiculo</code></td>
+<td>marca, modelo, ano, color, placa, fotoUrl</td>
+</tr>
+</tbody></table>
+<h3 id="enums">Enums</h3>
+<table>
+<thead>
+<tr>
+<th>Enum</th>
+<th>Valores</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>TipoViaje</code></td>
+<td>INMEDIATO, PROGRAMADO</td>
+</tr>
+<tr>
+<td><code>ViajeEstado</code></td>
+<td>PROGRAMADO, ACTIVO, EN_PROGRESO, COMPLETADO, CANCELADO</td>
+</tr>
+<tr>
+<td><code>SolicitudEstado</code></td>
+<td>PENDIENTE, ACEPTADA, RECHAZADA, CANCELADA</td>
+</tr>
+<tr>
+<td><code>MarcaVehiculo</code></td>
+<td>23 marcas (TOYOTA...TESLA, OTRO)</td>
+</tr>
+<tr>
+<td><code>ColoresVehiculo</code></td>
+<td>15 colores</td>
+</tr>
+</tbody></table>
+<h3 id="casos-de-uso-7">Casos de Uso (7)</h3>
+<table>
+<thead>
+<tr>
+<th>Caso de Uso</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GetFeedUseCase</code></td>
+<td>Obtiene feed de viajes activos (excluye propios y cancelados)</td>
+</tr>
+<tr>
+<td><code>PublicarViajeUseCase</code></td>
+<td>Crea un viaje y retorna su ID</td>
+</tr>
+<tr>
+<td><code>BuscarViajesUseCase</code></td>
+<td>Filtra feed por destino (case-insensitive)</td>
+</tr>
+<tr>
+<td><code>EnviarSolicitudUseCase</code></td>
+<td>Envía solicitud de ride, valida duplicados pendientes</td>
+</tr>
+<tr>
+<td><code>AceptarSolicitudUseCase</code></td>
+<td>Acepta solicitud con transacción atómica (decrementa asientos + agrega pasajero)</td>
+</tr>
+<tr>
+<td><code>CancelarViajeUseCase</code></td>
+<td>Cambia estado del viaje a CANCELADO</td>
+</tr>
+<tr>
+<td><code>FinalizarViajeUseCase</code></td>
+<td>Finaliza viaje, incrementa contadores de conductor y pasajeros</td>
+</tr>
+</tbody></table>
+<h2 id="8-capa-de-datos">8. CAPA DE DATOS</h2>
+<h3 id="room-base-de-datos-local">Room (Base de datos local)</h3>
+<table>
+<thead>
+<tr>
+<th>Elemento</th>
+<th>Detalle</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>DB Name</strong></td>
+<td><code>carpoolapp.db</code></td>
+</tr>
+<tr>
+<td><strong>Entidades</strong></td>
+<td><code>UsuarioEntity</code> (4 campos), <code>ViajeEntity</code> (6 campos)</td>
+</tr>
+<tr>
+<td><strong>DAOs</strong></td>
+<td><code>UsuarioDao</code> (get, insert, delete), <code>ViajeDao</code> (search, insertAll, deleteAll)</td>
+</tr>
+</tbody></table>
+<h3 id="firestore-datasources">Firestore DataSources</h3>
+<ul>
+<li><code>FirestoreUsuarioDataSource</code> — CRUD de usuarios</li>
+<li><code>FirestoreViajeDataSource</code> — CRUD de viajes + listener en tiempo real + seeding de datos demo</li>
+<li><code>FirestoreSolicitudDataSource</code> — CRUD de solicitudes con transacciones atómicas</li>
+<li><code>FirestoreAuthUtils</code> + <code>FirestoreSafe</code> — Wrappers de seguridad con logging de Crashlytics</li>
+</ul>
+<h3 id="dtos-y-mappers">DTOs y Mappers</h3>
+<ul>
+<li><code>ViajeDto</code>, <code>SolicitudDto</code>, <code>UsuarioDto</code>, <code>VehiculoDto</code> — deserialización manual (<code>fromDocument()</code>)</li>
+<li><code>ViajeMapper</code>, <code>SolicitudMapper</code>, <code>UsuarioMapper</code> — DTO ↔ Domain con Timestamp ↔ Long</li>
+</ul>
+<h3 id="data-seeder">Data Seeder</h3>
+<ul>
+<li><code>DataSeeder.seedIfEmpty()</code> — Crea 5 viajes demo con conductores demo si Firestore está vacío</li>
+<li><code>FirestoreViajeDataSource.seedDemoDataIfNeeded()</code> — 5 viajes adicionales en CDMX</li>
+</ul>
+<h2 id="9-notificaciones">9. NOTIFICACIONES</h2>
+<table>
+<thead>
+<tr>
+<th>Clase</th>
+<th>Rol</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CarpoolFirebaseMessagingService</code></td>
+<td>Recibe mensajes FCM, muestra notificación de sistema con deep link a detalle de viaje</td>
+</tr>
+<tr>
+<td><code>SolicitudNotificationManager</code></td>
+<td>Monitorea viajes del conductor con listener Firestore, notifica nuevas solicitudes PENDIENTES</td>
+</tr>
+<tr>
+<td><code>UsuarioNotificationManager</code></td>
+<td>Escucha colección <code>notifications</code> para notificaciones de solicitud aceptada/rechazada</td>
+</tr>
+</tbody></table>
+<h2 id="10-navegación">10. NAVEGACIÓN</h2>
+<ul>
+<li><strong>4 NavHosts independientes</strong> para aislamiento entre tabs (Home, Buscar, MisViajes, Perfil)</li>
+<li><strong>NavGraphs</strong>: <code>nav_graph.xml</code> (auth), <code>nav_home.xml</code>, <code>nav_buscar.xml</code>, <code>nav_mis_viajes.xml</code>, <code>nav_perfil.xml</code></li>
+<li>Transiciones compartidas con <strong>MaterialContainerTransform</strong> en ViajeDetalleFragment</li>
+</ul>
+<h2 id="11-interfaz-de-usuario">11. INTERFAZ DE USUARIO</h2>
+<h3 id="layouts-14">Layouts (14)</h3>
+<ul>
+<li><code>activity_main.xml</code> — ConstraintLayout + FrameLayout + BottomNavigationView</li>
+<li><code>fragment_auth.xml</code> — Logo, formulario email/password, botones Google Sign-In</li>
+<li><code>fragment_home.xml</code> — RecyclerView + FAB</li>
+<li><code>fragment_buscar.xml</code> — Card de búsqueda + RecyclerView</li>
+<li><code>fragment_viaje_detalle.xml</code> — Cards: conductor, ruta, detalles, pasajeros, solicitudes</li>
+<li><code>fragment_publicar_viaje.xml</code> — Cards: ruta, detalles, toggle tipo viaje, date picker</li>
+<li><code>fragment_perfil.xml</code> — Cards: avatar, nombre, stats, toggle conductor, vehículo</li>
+<li><code>fragment_mis_viajes.xml</code> — RecyclerView con secciones</li>
+<li><code>fragment_solicitudes.xml</code> — RecyclerView de solicitudes</li>
+<li><code>item_viaje.xml</code> — Card: avatar, conductor, estado, ruta con iconos, asientos</li>
+<li><code>item_solicitud.xml</code> — Card: pasajero, calificación, botones aceptar/rechazar</li>
+<li><code>item_section_header.xml</code> — TextView de sección</li>
+</ul>
+<h3 id="adapters">Adapters</h3>
+<table>
+<thead>
+<tr>
+<th>Adapter</th>
+<th>ViewTypes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ViajeAdapter</code> (DiffUtil)</td>
+<td>Tipo único</td>
+</tr>
+<tr>
+<td><code>MisViajesAdapter</code> (DiffUtil)</td>
+<td>Header + ViajeItem</td>
+</tr>
+<tr>
+<td><code>SolicitudAdapter</code> (DiffUtil)</td>
+<td>Tipo único</td>
+</tr>
+<tr>
+<td><code>SolicitudesDetalleAdapter</code></td>
+<td>Tipo único (inline)</td>
+</tr>
+</tbody></table>
+<h3 id="temas-y-recursos">Temas y Recursos</h3>
+<ul>
+<li>Tema: Material3 DayNight (<code>Theme.CarpoolApp</code>)</li>
+<li>35 colores definidos (primario #1A73E8, secundario #34A853, fondo #F8F9FA, error #D93025)</li>
+<li>14 drawables (shape backgrounds, iconos vectoriales)</li>
+<li>45 strings (español)</li>
+<li>Íconos: <code>ic_launcher</code> personalizado (auto con 4 personas)</li>
+<li>Network Security: cleartext permitido para localhost/10.0.2.2/127.0.0.1</li>
+</ul>
+<h2 id="12-patrones-arquitectónicos">12. PATRONES ARQUITECTÓNICOS</h2>
+<ol>
+<li><strong>Hilt DI</strong> — <code>@HiltAndroidApp</code> → <code>@AndroidEntryPoint</code> → <code>@HiltViewModel</code> → <code>@Module/@InstallIn(SingletonComponent)</code></li>
+<li><strong>MVVM</strong> — Fragment observa <code>StateFlow&lt;UiState&gt;</code> con <code>repeatOnLifecycle(STARTED)</code></li>
+<li><strong>Repository Pattern</strong> — Interfaces en Domain, implementaciones en Data, binding con Hilt</li>
+<li><strong>CallbackFlow</strong> — Listeners Firestore en tiempo real con <code>addSnapshotListener</code> + <code>awaitClose{}</code></li>
+<li><strong>Transacciones Firestore</strong> — <code>runTransaction</code> para aceptar solicitud (atómico)</li>
+<li><strong>FirestoreSafe</strong> — Wrapper con logging Crashlytics para errores de permisos/precondiciones</li>
+<li><strong>Persistent Notifications</strong> — SharedPreferences para tracking de IDs ya notificados</li>
+<li><strong>Multi-NavHost</strong> — 4 NavHostFragments ocultos/mostrados, no recreados al cambiar tabs</li>
+<li><strong>Imágenes Base64</strong> — Fotos de perfil como data URIs en Firestore (no Firebase Storage)</li>
+</ol>
+<h2 id="13-estructura-de-directorios">13. ESTRUCTURA DE DIRECTORIOS</h2>
+<pre><code>app/src/main/java/com/carpoolapp/
+├── CarpoolApp.kt                          # @HiltAndroidApp
+├── MainActivity.kt                        # Main entry point
+├── config/
+│   └── ClerkConfig.kt
+├── data/
+│   ├── local/ (dao/, db/, entity/)        # Room
+│   ├── mapper/                            # DTO ↔ Domain
+│   ├── remote/
+│   │   ├── dto/                           # DTOs
+│   │   └── firestore/                     # DataSources
+│   ├── repository/                        # Implementaciones
+│   └── seed/                              # DataSeeder
+├── di/                                    # Hilt Modules
+├── domain/
+│   ├── model/                             # Models + Enums
+│   ├── repository/                        # Interfaces
+│   └── usecase/                           # Casos de uso
+├── notifications/                         # FCM + Notification Managers
+└── ui/
+    ├── auth/                              # AuthFragment + ViewModel
+    ├── buscar/                            # BuscarViajeFragment + ViewModel
+    ├── common/                            # BaseFragment
+    ├── detalle/                           # ViajeDetalleFragment + ViewModel
+    ├── home/                              # HomeFragment + ViewModel
+    ├── mis_viajes/                        # MisViajesFragment + ViewModel
+    ├── perfil/                            # PerfilFragment + ViewModel
+    ├── publicar/                          # PublicarViajeFragment + ViewModel
+    └── solicitudes/                       # SolicitudesFragment + ViewModel
+</code></pre>
+<h2 id="14-tests">14. TESTS</h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Framework</th>
+<th>Cobertura</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GetFeedUseCaseTest</code></td>
+<td>JUnit + runTest</td>
+<td>Caso de uso retorna feed</td>
+</tr>
+<tr>
+<td><code>HomeViewModelTest</code></td>
+<td>MockK + Turbine</td>
+<td>cargaFeed emite Success/Error</td>
+</tr>
+<tr>
+<td><code>PerfilViewModelTest</code></td>
+<td>MockK + Turbine</td>
+<td>Carga perfil y actualiza vehículo</td>
+</tr>
+</tbody></table>
+<hr>
+<p><strong>Resumen:</strong> App Android nativa en Kotlin para compartir viajes (carpooling) con arquitectura MVVM + Clean Architecture, Firebase como backend (Auth, Firestore, FCM, Crashlytics), Room como caché local, Hilt para DI, y 7 fragments con sus ViewModels cubriendo el flujo completo: registro/login, publicación de viajes, búsqueda, solicitudes, gestión de viajes y perfil de usuario.</p>
+
+		</body>

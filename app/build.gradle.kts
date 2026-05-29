@@ -8,9 +8,26 @@ plugins {
     alias(libs.plugins.navigation.safe.args)
 }
 
+import java.util.Properties
+
 android {
     namespace = "com.carpoolapp"
     compileSdk = 35
+
+    val keystorePropertiesFile = rootProject.file("keystore.properties")
+    val keystoreProperties = Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(keystorePropertiesFile.inputStream())
+    }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties.getProperty("keyAlias")
+            keyPassword = keystoreProperties.getProperty("keyPassword")
+            storeFile = rootProject.file(keystoreProperties.getProperty("storeFile") ?: "carpoolsign.jks")
+            storePassword = keystoreProperties.getProperty("storePassword")
+        }
+    }
 
     defaultConfig {
         applicationId = "com.carpoolapp"
@@ -24,6 +41,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
