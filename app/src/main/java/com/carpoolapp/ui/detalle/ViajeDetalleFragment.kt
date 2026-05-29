@@ -21,12 +21,14 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import com.google.firebase.auth.FirebaseAuth
 
 @AndroidEntryPoint
 class ViajeDetalleFragment : BaseFragment<FragmentViajeDetalleBinding>() {
 
     private val viewModel: ViajeDetalleViewModel by viewModels()
     private var solicitudesAdapter: SolicitudesDetalleAdapter? = null
+    private val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
     override fun inflateBinding(
         inflater: LayoutInflater, container: ViewGroup?
@@ -145,38 +147,32 @@ class ViajeDetalleFragment : BaseFragment<FragmentViajeDetalleBinding>() {
         }
         
         binding.tvAsientos.text = "${viaje.asientosDisponibles}/${viaje.asientosTotales} asientos disponibles"
-        binding.tvEstado.text = viaje.estado.name
         
         val vehiculoInfo = viaje.vehiculoConductor?.let { v ->
-            buildString {
-                if (v.placa.isNotEmpty()) append("Placa: ${v.placa.uppercase()}")
-                if (v.marca.isNotEmpty() || v.modelo.isNotEmpty()) {
-                    if (isNotEmpty()) append(" • ")
-                    append("${v.marca} ${v.modelo}".trim())
-                }
-                if (v.color.isNotEmpty()) {
-                    if (isNotEmpty()) append(" • ")
-                    append(v.color)
-                }
-                if (v.ano > 0) {
-                    if (isNotEmpty()) append(" • ")
-                    append(v.ano.toString())
-                }
-            }.ifEmpty { "No especificado" }
-        } ?: "No especificado"
-        binding.tvVehiculo.text = vehiculoInfo
-
-        // Mostrar pasajeros aceptados
-        val pasajerosAceptados = solicitudes.filter { it.estado == com.carpoolapp.domain.model.SolicitudEstado.ACEPTADA }
-        if (pasajerosAceptados.isNotEmpty()) {
-            val listaPasajeros = pasajerosAceptados.joinToString("\n") { p ->
-                "• ${p.pasajeroNombre}${if (p.pasajeroCalificacion > 0) " ⭐${p.pasajeroCalificacion}" else ""}"
-            }
-            binding.tvPasajerosAceptadosLista.text = listaPasajeros
-            binding.pasajerosAceptadosCard.visibility = View.VISIBLE
+            listOfNotNull(
+                v.placa?.uppercase(),
+                v.marca?.takeIf { it.isNotEmpty() }?.let { "$it ${v.modelo}" },
+                v.color?.takeIf { it.isNotEmpty() }
+            ).joinToString(" - ")
+        } ?: ""
+        
+        if (vehiculoInfo.isNotEmpty()) {
+            binding.tvVehiculo.text = vehiculoInfo
+            binding.labelVehiculo.visibility = View.VISIBLE
+            binding.tvVehiculo.visibility = View.VISIBLE
         } else {
-            binding.pasajerosAceptadosCard.visibility = View.GONE
+            binding.labelVehiculo.visibility = View.GONE
+            binding.tvVehiculo.visibility = View.GONE
         }
+        
+        val estadoText = when (viaje.estado) {
+            com.carpoolapp.domain.model.ViajeEstado.ACTIVO -> "ACTIVO"
+            com.carpoolapp.domain.model.ViajeEstado.EN_PROGRESO -> "EN PROGRESO"
+            com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> "PROGRAMADO"
+            com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> "COMPLETADO"
+            com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> "CANCELADO"
+        }
+        binding.tvEstado.text = estadoText
         
         val estadoColor = when (viaje.estado) {
             com.carpoolapp.domain.model.ViajeEstado.PROGRAMADO -> com.carpoolapp.R.color.estado_programado
@@ -184,7 +180,7 @@ class ViajeDetalleFragment : BaseFragment<FragmentViajeDetalleBinding>() {
             com.carpoolapp.domain.model.ViajeEstado.COMPLETADO -> com.carpoolapp.R.color.estado_completado
             com.carpoolapp.domain.model.ViajeEstado.CANCELADO -> com.carpoolapp.R.color.estado_cancelado
         }
-        binding.tvEstado.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), estadoColor))
+        binding.tvEstado.background.setTint(androidx.core.content.ContextCompat.getColor(requireContext(), estadoColor))
         
         if (viaje.descripcion.isNotEmpty()) {
             binding.tvDescripcion.text = viaje.descripcion
@@ -219,15 +215,32 @@ class ViajeDetalleFragment : BaseFragment<FragmentViajeDetalleBinding>() {
                 it.estado == com.carpoolapp.domain.model.SolicitudEstado.PENDIENTE 
             })
         } else {
-            binding.btnSolicitar.visibility = if (yaSolicito || viaje.estado == com.carpoolapp.domain.model.ViajeEstado.COMPLETADO) View.GONE else View.VISIBLE
+            // Es pasajero - verificar si ya solicitó
+            val solicitudPendiente = solicitudes.any { 
+                it.pasajeroId == auth.currentUser?.uid && 
+                it.estado == com.carpoolapp.domain.model.SolicitudEstado.PENDIENTE 
+            }
+            
+            if (yaSolicito || solicitudPendiente || viaje.estado == com.carpoolapp.domain.model.ViajeEstado.COMPLETADO) {
+                binding.btnSolicitar.visibility = View.GONE
+            } else {
+                binding.btnSolicitar.visibility = View.VISIBLE
+            }
+            
             binding.btnFinalizar.visibility = View.GONE
             binding.btnCancelar.visibility = View.GONE
             binding.solicitudesCard.visibility = View.GONE
             
-            if (yaSolicito) {
+            if (yaSolicito || solicitudPendiente) {
                 binding.tvEstadoSolicitud.visibility = View.VISIBLE
-                binding.tvEstadoSolicitud.text = "Has solicitado este viaje"
-                binding.btnCancelarSolicitud.visibility = View.VISIBLE
+                val estadoSolicitud = solicitudes.find { it.pasajeroId == auth.currentUser?.uid }
+                binding.tvEstadoSolicitud.text = when (estadoSolicitud?.estado) {
+                    com.carpoolapp.domain.model.SolicitudEstado.ACEPTADA -> "✅ Solicitud aceptada"
+                    com.carpoolapp.domain.model.SolicitudEstado.RECHAZADA -> "❌ Solicitud rechazada"
+                    com.carpoolapp.domain.model.SolicitudEstado.CANCELADA -> "Solicitud cancelada"
+                    else -> "Has solicitado este viaje"
+                }
+                binding.btnCancelarSolicitud.visibility = if (estadoSolicitud?.estado == com.carpoolapp.domain.model.SolicitudEstado.PENDIENTE) View.VISIBLE else View.GONE
             } else {
                 binding.tvEstadoSolicitud.visibility = View.GONE
                 binding.btnCancelarSolicitud.visibility = View.GONE
@@ -255,12 +268,19 @@ class SolicitudesDetalleAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val solicitud = solicitudes[position]
+        android.util.Log.d("SolicitudesAdapter", "Binding solicitud: ${solicitud.id}, pasajero: ${solicitud.pasajeroNombre}, estado: ${solicitud.estado}")
         holder.binding.apply {
             tvPasajero.text = solicitud.pasajeroNombre
             tvEstadoSolicitud.text = solicitud.estado.name
             tvCalificacionPasajero.text = "⭐ ${solicitud.pasajeroCalificacion}"
-            btnAceptar.setOnClickListener { onAceptar(solicitud) }
-            btnRechazar.setOnClickListener { onRechazar(solicitud) }
+            btnAceptar.setOnClickListener { 
+                android.util.Log.d("SolicitudesAdapter", "Click en aceptar para solicitud: ${solicitud.id}")
+                onAceptar(solicitud) 
+            }
+            btnRechazar.setOnClickListener { 
+                android.util.Log.d("SolicitudesAdapter", "Click en rechazar para solicitud: ${solicitud.id}")
+                onRechazar(solicitud) 
+            }
         }
     }
 

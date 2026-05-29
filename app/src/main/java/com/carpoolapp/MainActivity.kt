@@ -21,6 +21,8 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.AndroidEntryPoint
 import com.carpoolapp.databinding.ActivityMainBinding
+import com.carpoolapp.notifications.SolicitudNotificationManager
+import com.carpoolapp.notifications.UsuarioNotificationManager
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -28,6 +30,12 @@ class MainActivity : AppCompatActivity() {
 
     @Inject
     lateinit var firebaseAuth: FirebaseAuth
+
+    @Inject
+    lateinit var notificationManager: SolicitudNotificationManager
+
+    @Inject
+    lateinit var usuarioNotificationManager: UsuarioNotificationManager
 
     private lateinit var binding: ActivityMainBinding
     private var appBarConfiguration: AppBarConfiguration? = null
@@ -47,6 +55,12 @@ class MainActivity : AppCompatActivity() {
             WindowManager.LayoutParams.FLAG_SECURE
         )
         
+        // Iniciar el manejador centralizado de notificaciones de solicitudes (conductor)
+        notificationManager.startListening()
+        
+        // Iniciar el manejador de notificaciones para el usuario (pasajero)
+        usuarioNotificationManager.startListening()
+
         // Manejar deep link desde notificación
         handleNotificationIntent(intent)
 
@@ -208,6 +222,8 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         authStateListener?.let { firebaseAuth.removeAuthStateListener(it) }
+        notificationManager.stopListening()
+        usuarioNotificationManager.stopListening()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -225,8 +241,7 @@ class MainActivity : AppCompatActivity() {
                 if (currentNav != null) {
                     try {
                         val action = com.carpoolapp.ui.home.HomeFragmentDirections.actionHomeToDetalle(
-                            tripId = tripId,
-                            esConductor = true
+                            tripId = tripId
                         )
                         currentNav.navigate(action)
                     } catch (e: Exception) {

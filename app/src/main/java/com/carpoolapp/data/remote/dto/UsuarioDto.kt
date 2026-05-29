@@ -11,6 +11,8 @@ data class UsuarioDto(
     val esConductor: Boolean = false,
     val calificacion: Double = 5.0,
     val viajesCompletados: Int = 0,
+    val viajesComoConductor: Int = 0,
+    val viajesComoPasajero: Int = 0,
     val fcmToken: String? = null,
     val createdAt: com.google.firebase.Timestamp = com.google.firebase.Timestamp.now()
 )

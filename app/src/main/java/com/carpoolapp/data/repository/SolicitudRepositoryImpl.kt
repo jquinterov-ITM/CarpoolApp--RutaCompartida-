@@ -1,15 +1,5 @@
 package com.carpoolapp.data.repository
 
-import android.app.Application
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
-import android.os.Build
-import androidx.core.app.NotificationCompat
-import com.carpoolapp.MainActivity
-import com.carpoolapp.R
 import com.carpoolapp.data.mapper.toDomain
 import com.carpoolapp.data.mapper.toDto
 import com.carpoolapp.data.remote.firestore.FirestoreSolicitudDataSource
@@ -17,10 +7,15 @@ import com.carpoolapp.domain.model.Solicitud
 import com.carpoolapp.domain.repository.SolicitudRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import javax.inject.Inject
 
 class SolicitudRepositoryImpl @Inject constructor(
-    private val application: Application,
     private val dataSource: FirestoreSolicitudDataSource
 ) : SolicitudRepository {
 
@@ -34,22 +29,30 @@ class SolicitudRepositoryImpl @Inject constructor(
     }
 
     override suspend fun aceptar(tripId: String, requestId: String) {
-        android.util.Log.d("SolicitudRepository", "Aceptando solicitud $requestId en viaje $tripId")
+        android.util.Log.d("SolicitudRepository", "=== ACEPTANDO SOLICITUD ===")
+        android.util.Log.d("SolicitudRepository", "tripId: $tripId, requestId: $requestId")
         
         val solicitudData = dataSource.getSolicitudById(tripId, requestId)
+        val viajeData = dataSource.getViajeById(tripId)
+        
+        android.util.Log.d("SolicitudRepository", "solicitudData: ${solicitudData?.pasajeroId ?: "null"}")
+        android.util.Log.d("SolicitudRepository", "viajeData: ${viajeData?.conductorNombre ?: "null"}")
+        
         dataSource.aceptarConTransaction(tripId, requestId)
         android.util.Log.d("SolicitudRepository", "Solicitud aceptada en Firestore")
         
-        if (solicitudData != null) {
-            enviarNotificacionAlPasajero(
-                pasajeroNombre = solicitudData.pasajeroNombre,
-                viajeOrigen = solicitudData.tripId,
-                viajeDestino = "Tu solicitud fue ACEPTADA",
-                tripId = tripId,
-                tipo = "solicitud_aceptada",
+        // Enviar notificación al PASAJERO (no al conductor)
+        if (solicitudData != null && viajeData != null) {
+            android.util.Log.d("SolicitudRepository", "Enviando notificación a: ${solicitudData.pasajeroId}")
+            enviarNotificacionFCM(
+                userId = solicitudData.pasajeroId,
                 titulo = "¡Solicitud Aceptada!",
-                cuerpo = "El conductor aceptó tu solicitud de viaje"
+                cuerpo = "${viajeData.conductorNombre} aceptó tu solicitud",
+                tripId = tripId,
+                tipo = "solicitud_aceptada"
             )
+        } else {
+            android.util.Log.e("SolicitudRepository", "No se pudo enviar notificación: solicitudData=$solicitudData, viajeData=$viajeData")
         }
     }
 
@@ -57,18 +60,19 @@ class SolicitudRepositoryImpl @Inject constructor(
         android.util.Log.d("SolicitudRepository", "Rechazando solicitud $requestId en viaje $tripId")
         
         val solicitudData = dataSource.getSolicitudById(tripId, requestId)
+        val viajeData = dataSource.getViajeById(tripId)
+        
         dataSource.actualizarEstado(tripId, requestId, "RECHAZADA")
         android.util.Log.d("SolicitudRepository", "Solicitud rechazada en Firestore")
         
-        if (solicitudData != null) {
-            enviarNotificacionAlPasajero(
-                pasajeroNombre = solicitudData.pasajeroNombre,
-                viajeOrigen = solicitudData.tripId,
-                viajeDestino = "Tu solicitud fue RECHAZADA",
-                tripId = tripId,
-                tipo = "solicitud_rechazada",
+        // Enviar notificación al PASAJERO (no al conductor)
+        if (solicitudData != null && viajeData != null) {
+            enviarNotificacionFCM(
+                userId = solicitudData.pasajeroId,
                 titulo = "Solicitud Rechazada",
-                cuerpo = "El conductor rechazó tu solicitud de viaje"
+                cuerpo = "${viajeData.conductorNombre} rechazó tu solicitud",
+                tripId = tripId,
+                tipo = "solicitud_rechazada"
             )
         }
     }
@@ -77,55 +81,30 @@ class SolicitudRepositoryImpl @Inject constructor(
         dataSource.actualizarEstado(tripId, solicitudId, "CANCELADA")
     }
     
-    private fun enviarNotificacionAlPasajero(
-        pasajeroNombre: String,
-        viajeOrigen: String,
-        viajeDestino: String,
-        tripId: String,
-        tipo: String,
+    private suspend fun enviarNotificacionFCM(
+        userId: String,
         titulo: String,
-        cuerpo: String
+        cuerpo: String,
+        tripId: String,
+        tipo: String
     ) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val channel = NotificationChannel(
-                    "solicitudes_viaje",
-                    "Solicitudes de viaje",
-                    NotificationManager.IMPORTANCE_HIGH
-                ).apply {
-                    description = "Notificaciones de viajes y solicitudes"
-                    enableVibration(true)
-                }
-                val manager = application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                manager.createNotificationChannel(channel)
-            }
+            val firestore = com.google.firebase.firestore.FirebaseFirestore.getInstance()
             
-            val intent = Intent(application, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                putExtra("tripId", tripId)
-                putExtra("navigateToTrip", true)
-            }
-            val pendingIntent = PendingIntent.getActivity(
-                application,
-                tripId.hashCode() + 1000,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            val notificacion = hashMapOf(
+                "userId" to userId,
+                "titulo" to titulo,
+                "cuerpo" to cuerpo,
+                "tripId" to tripId,
+                "tipo" to tipo,
+                "leida" to false,
+                "timestamp" to com.google.firebase.Timestamp.now()
             )
             
-            val notification = NotificationCompat.Builder(application, "solicitudes_viaje")
-                .setSmallIcon(R.drawable.ic_person_grey_24dp)
-                .setContentTitle(titulo)
-                .setContentText(cuerpo)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent)
-                .build()
-            
-            val manager = application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.notify(System.currentTimeMillis().toInt() + tripId.hashCode() + 1000, notification)
-            android.util.Log.d("SolicitudRepository", "Notificación enviada a pasajero: $pasajeroNombre")
+            firestore.collection("notifications").add(notificacion).await()
+            android.util.Log.d("SolicitudRepository", "Notificación guardada en Firestore para $userId: $titulo")
         } catch (e: Exception) {
-            android.util.Log.e("SolicitudRepository", "Error enviando notificación: ${e.message}", e)
+            android.util.Log.e("SolicitudRepository", "Error guardando notificación: ${e.message}", e)
         }
     }
 }

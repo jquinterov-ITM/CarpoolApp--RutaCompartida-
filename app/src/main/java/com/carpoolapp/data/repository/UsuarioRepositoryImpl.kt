@@ -31,7 +31,13 @@ class UsuarioRepositoryImpl @Inject constructor(
     }
 
     override suspend fun actualizarFotoUrl(usuarioId: String, fotoUrl: String) {
+        android.util.Log.d("UsuarioRepository", "Actualizando foto para usuario $usuarioId, tamaño: ${fotoUrl.length} chars")
         dataSource.actualizarFotoUrl(usuarioId, fotoUrl)
+        android.util.Log.d("UsuarioRepository", "Foto actualizada en Firestore")
+    }
+
+    override suspend fun actualizarNombre(usuarioId: String, nombre: String) {
+        dataSource.actualizarNombre(usuarioId, nombre)
     }
 
     override suspend fun actualizarEsConductor(usuarioId: String, esConductor: Boolean) {
@@ -44,5 +50,13 @@ class UsuarioRepositoryImpl @Inject constructor(
 
     override suspend fun incrementarViajesCompletados(usuarioId: String) {
         dataSource.incrementarViajesCompletados(usuarioId)
+    }
+    
+    override suspend fun incrementarViajesComoConductor(usuarioId: String) {
+        dataSource.incrementarCampo("viajesComoConductor", usuarioId)
+    }
+    
+    override suspend fun incrementarViajesComoPasajero(usuarioId: String) {
+        dataSource.incrementarCampo("viajesComoPasajero", usuarioId)
     }
 }

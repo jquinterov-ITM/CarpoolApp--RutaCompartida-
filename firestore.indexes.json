@@ -5,7 +5,17 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "conductorId", "order": "ASCENDING" },
-        { "fieldPath": "fechaHora", "order": "DESCENDING" }
+        { "fieldPath": "fechaHora", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" },
+        { "fieldPath": "__name__", "order": "DESCENDING" }
       ]
     }
   ],

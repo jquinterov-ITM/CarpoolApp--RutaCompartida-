@@ -22,7 +22,6 @@ import com.carpoolapp.ui.common.BaseFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MisViajesFragment : BaseFragment<FragmentMisViajesBinding>() {
@@ -43,7 +42,6 @@ class MisViajesFragment : BaseFragment<FragmentMisViajesBinding>() {
                 com.carpoolapp.R.id.action_misViajes_to_detalle,
                 android.os.Bundle().apply {
                     putString("tripId", viaje.id)
-                    putBoolean("esConductor", true)
                 }
             )
         }
@@ -92,19 +90,35 @@ class MisViajesFragment : BaseFragment<FragmentMisViajesBinding>() {
         super.onResume()
         // Force reload when fragment becomes visible again (e.g., after publishing a trip)
         viewModel.cargar()
-        viewModel.crearCanalNotificacion()
     }
 
     private fun buildItems(state: MisViajesUiState.Success): List<MisViajeItem> {
         val items = mutableListOf<MisViajeItem>()
+        
+        // Como conductor - Activos
         if (state.comoConductor.isNotEmpty()) {
             items.add(MisViajeItem.Header("Como conductor"))
             items.addAll(state.comoConductor.map { MisViajeItem.ViajeItem(it) })
         }
+        
+        // Como conductor - Finalizados
+        if (state.comoConductorFinalizados.isNotEmpty()) {
+            items.add(MisViajeItem.Header("Finalizados (Conductor)"))
+            items.addAll(state.comoConductorFinalizados.map { MisViajeItem.ViajeItem(it) })
+        }
+        
+        // Como pasajero - Activos
         if (state.comoPasajero.isNotEmpty()) {
             items.add(MisViajeItem.Header("Como pasajero"))
             items.addAll(state.comoPasajero.map { MisViajeItem.ViajeItem(it) })
         }
+        
+        // Como pasajero - Finalizados
+        if (state.comoPasajeroFinalizados.isNotEmpty()) {
+            items.add(MisViajeItem.Header("Finalizados (Pasajero)"))
+            items.addAll(state.comoPasajeroFinalizados.map { MisViajeItem.ViajeItem(it) })
+        }
+        
         return items
     }
 }

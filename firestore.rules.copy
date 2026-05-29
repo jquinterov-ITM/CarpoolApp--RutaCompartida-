@@ -18,7 +18,7 @@ service cloud.firestore {
                     && request.resource.data.conductorId == request.auth.uid
                     && request.resource.data.asientosDisponibles is int
                     && request.resource.data.asientosDisponibles >= 0
-                    && request.resource.data.estado in ["PROGRAMADO", "CANCELADO", "ACTIVO"];
+                    && request.resource.data.estado in ["PROGRAMADO", "CANCELADO", "ACTIVO", "COMPLETADO"];
 
       allow update: if request.auth != null
                     && resource.data.conductorId == request.auth.uid;

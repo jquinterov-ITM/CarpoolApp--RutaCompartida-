@@ -53,6 +53,22 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.emailInput.addTextChangedListener(object : android.text.TextWatcher {
+            override fun afterTextChanged(s: android.text.Editable?) {
+                binding.mensaje.visibility = View.GONE
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+
+        binding.passwordInput.addTextChangedListener(object : android.text.TextWatcher {
+            override fun afterTextChanged(s: android.text.Editable?) {
+                binding.mensaje.visibility = View.GONE
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+
         binding.btnSignIn.setOnClickListener {
             val email = binding.emailInput.text.toString().trim()
             val password = binding.passwordInput.text.toString()
@@ -67,6 +83,7 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>() {
         binding.btnRegister.setOnClickListener {
             val email = binding.emailInput.text.toString().trim()
             val password = binding.passwordInput.text.toString()
+            android.util.Log.d("AuthFragment", "btnRegister clicked - email: $email, password length: ${password.length}")
             if (email.isNotBlank() && password.isNotBlank()) {
                 viewModel.registerWithEmail(email, password)
             } else {
@@ -95,7 +112,17 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>() {
                             binding.btnGoogle.isEnabled = false
                             binding.mensaje.visibility = View.GONE
                         }
-                        is AuthUiState.EmailEnviado -> Unit
+                        is AuthUiState.RegistroExitoso -> {
+                            binding.progress.visibility = View.GONE
+                            binding.btnSignIn.isEnabled = true
+                            binding.btnRegister.isEnabled = true
+                            binding.btnGoogle.isEnabled = true
+                            binding.mensaje.apply {
+                                visibility = View.VISIBLE
+                                text = "✅ Cuenta creada: ${state.email}. Ahora inicia sesión."
+                                setTextColor(requireContext().getColor(com.carpoolapp.R.color.success_color))
+                            }
+                        }
                         is AuthUiState.Autenticado -> {
                             if (!authHandled) {
                                 authHandled = true
@@ -109,10 +136,19 @@ class AuthFragment : BaseFragment<FragmentAuthBinding>() {
                             binding.btnSignIn.isEnabled = true
                             binding.btnRegister.isEnabled = true
                             binding.btnGoogle.isEnabled = true
-                            binding.mensaje.text = state.mensaje
-                            binding.mensaje.visibility = View.VISIBLE
+                            binding.mensaje.apply {
+                                visibility = View.VISIBLE
+                                text = state.mensaje
+                                setTextColor(requireContext().getColor(com.carpoolapp.R.color.error_color))
+                            }
+                            android.util.Log.d("AuthFragment", "Error mostrado: ${state.mensaje}")
                         }
-                        else -> {}
+                        AuthUiState.Idle -> {
+                            // No cambiar el mensaje - mantener errores visibles hasta que el usuario escriba
+                        }
+                        is AuthUiState.EmailEnviado -> {
+                            // Estado intermedio, no hacer nada
+                        }
                     }
                 }
             }

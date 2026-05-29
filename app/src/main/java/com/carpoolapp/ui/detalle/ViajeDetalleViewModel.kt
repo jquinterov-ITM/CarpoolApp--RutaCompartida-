@@ -1,26 +1,14 @@
 package com.carpoolapp.ui.detalle
 
-import android.app.Application
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
-import android.os.Build
-import androidx.core.app.NotificationCompat
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.carpoolapp.MainActivity
-import com.carpoolapp.R
 import com.carpoolapp.domain.model.Solicitud
-import com.carpoolapp.domain.model.SolicitudEstado
 import com.carpoolapp.domain.model.Viaje
 import com.carpoolapp.domain.usecase.EnviarSolicitudUseCase
 import com.carpoolapp.domain.usecase.FinalizarViajeUseCase
 import com.carpoolapp.domain.repository.SolicitudRepository
 import com.carpoolapp.domain.repository.ViajeRepository
-import com.carpoolapp.domain.usecase.GetFeedUseCase
 import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +37,6 @@ sealed class DetalleUiState {
 @HiltViewModel
 class ViajeDetalleViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val application: Application,
     private val viajeRepository: ViajeRepository,
     private val solicitudRepository: SolicitudRepository,
     private val enviarSolicitudUseCase: EnviarSolicitudUseCase,
@@ -63,26 +50,8 @@ class ViajeDetalleViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<DetalleUiState>(DetalleUiState.Loading)
     val uiState: StateFlow<DetalleUiState> = _uiState.asStateFlow()
     
-    private var solicitudesPrevias = emptyList<Solicitud>()
-    private var ultimoEstadoConocido = emptySet<String>() // Para detectar cambios de estado
-
     init {
         cargarDetalle()
-    }
-    
-    private fun crearCanalNotificacion() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                "solicitudes_viaje",
-                "Solicitudes de viaje",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Notificaciones cuando hay nuevas solicitudes en tus viajes"
-                enableVibration(true)
-            }
-            val manager = application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.createNotificationChannel(channel)
-        }
     }
 
     private fun cargarDetalle() {
@@ -94,9 +63,6 @@ class ViajeDetalleViewModel @Inject constructor(
                 val esConductorReal = viaje.conductorId == auth.currentUser?.uid
                 val yaSolicito = viaje.pasajeroIds.contains(auth.currentUser?.uid)
                 android.util.Log.d("ViajeDetalle", "esConductor: $esConductorReal, yaSolicito: $yaSolicito")
-                
-                // Crear canal de notificación
-                crearCanalNotificacion()
                 
                 solicitudRepository.getSolicitudesPorViaje(tripId)
                     .catch { e ->
@@ -110,23 +76,6 @@ class ViajeDetalleViewModel @Inject constructor(
                     }
                     .collect { solicitudes ->
                         android.util.Log.d("ViajeDetalle", "Solicitudes cargadas: ${solicitudes.size}")
-                        
-                        // Detectar nuevas solicitudes y mostrar notificación
-                        val nuevasSolicitudes = solicitudes.filter { nueva ->
-                            solicitudesPrevias.none { anterior -> anterior.id == nueva.id }
-                        }
-                        
-                        if (nuevasSolicitudes.isNotEmpty() && esConductorReal) {
-                            nuevasSolicitudes.forEach { solicitud ->
-                                mostrarNotificacionSolicitud(
-                                    solicitud.pasajeroNombre,
-                                    viaje.origen,
-                                    viaje.destino
-                                )
-                            }
-                        }
-                        
-                        solicitudesPrevias = solicitudes
                         
                         _uiState.value = DetalleUiState.Success(
                             viaje = viaje,
@@ -142,32 +91,6 @@ class ViajeDetalleViewModel @Inject constructor(
         }
     }
     
-    private fun mostrarNotificacionSolicitud(pasajeroNombre: String, viajeOrigen: String, viajeDestino: String) {
-        val intent = Intent(application, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("tripId", tripId)
-            putExtra("navigateToTrip", true)
-        }
-        val pendingIntent = PendingIntent.getActivity(
-            application,
-            tripId.hashCode(),
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        
-        val notification = NotificationCompat.Builder(application, "solicitudes_viaje")
-            .setSmallIcon(R.drawable.ic_person_grey_24dp)
-            .setContentTitle("Nueva solicitud")
-            .setContentText("$pasajeroNombre solicitó tu viaje: $viajeOrigen → $viajeDestino")
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .build()
-        
-        val manager = application.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.notify(System.currentTimeMillis().toInt() + tripId.hashCode(), notification)
-    }
-
     fun cancelarViaje() {
         viewModelScope.launch {
             _uiState.value = DetalleUiState.Cancelando
@@ -212,13 +135,25 @@ class ViajeDetalleViewModel @Inject constructor(
     fun aceptarSolicitud(solicitudId: String) {
         viewModelScope.launch {
             try {
-                android.util.Log.d("ViajeDetalleVM", "Aceptando solicitud: $solicitudId, tripId: $tripId")
+                val uid = auth.currentUser?.uid
+                android.util.Log.d("ViajeDetalleVM", "=== ACEPTAR SOLICITUD ===")
+                android.util.Log.d("ViajeDetalleVM", "solicitudId: $solicitudId, tripId: $tripId, usuario: $uid")
+                
+                if (solicitudId.isBlank()) {
+                    _uiState.value = DetalleUiState.Error("ID de solicitud vacío")
+                    return@launch
+                }
+                if (tripId.isBlank()) {
+                    _uiState.value = DetalleUiState.Error("ID de viaje vacío")
+                    return@launch
+                }
+                
                 solicitudRepository.aceptar(tripId, solicitudId)
                 android.util.Log.d("ViajeDetalleVM", "Solicitud aceptada correctamente")
                 cargarDetalle()
             } catch (e: Exception) {
                 android.util.Log.e("ViajeDetalleVM", "Error al aceptar: ${e.message}", e)
-                _uiState.value = DetalleUiState.Error(e.message ?: "Error al aceptar solicitud")
+                _uiState.value = DetalleUiState.Error("Error al aceptar: ${e.message ?: "Error desconocido"}")
             }
         }
     }
@@ -226,13 +161,25 @@ class ViajeDetalleViewModel @Inject constructor(
     fun rechazarSolicitud(solicitudId: String) {
         viewModelScope.launch {
             try {
-                android.util.Log.d("ViajeDetalleVM", "Rechazando solicitud: $solicitudId, tripId: $tripId")
+                val uid = auth.currentUser?.uid
+                android.util.Log.d("ViajeDetalleVM", "=== RECHAZAR SOLICITUD ===")
+                android.util.Log.d("ViajeDetalleVM", "solicitudId: $solicitudId, tripId: $tripId, usuario: $uid")
+                
+                if (solicitudId.isBlank()) {
+                    _uiState.value = DetalleUiState.Error("ID de solicitud vacío")
+                    return@launch
+                }
+                if (tripId.isBlank()) {
+                    _uiState.value = DetalleUiState.Error("ID de viaje vacío")
+                    return@launch
+                }
+                
                 solicitudRepository.rechazar(tripId, solicitudId)
                 android.util.Log.d("ViajeDetalleVM", "Solicitud rechazada correctamente")
                 cargarDetalle()
             } catch (e: Exception) {
                 android.util.Log.e("ViajeDetalleVM", "Error al rechazar: ${e.message}", e)
-                _uiState.value = DetalleUiState.Error(e.message ?: "Error al rechazar solicitud")
+                _uiState.value = DetalleUiState.Error("Error al rechazar: ${e.message ?: "Error desconocido"}")
             }
         }
     }

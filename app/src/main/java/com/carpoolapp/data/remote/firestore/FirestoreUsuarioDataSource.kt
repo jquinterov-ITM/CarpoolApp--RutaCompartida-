@@ -82,8 +82,24 @@ class FirestoreUsuarioDataSource @Inject constructor(
     }
 
     suspend fun actualizarFotoUrl(userId: String, fotoUrl: String) {
+        android.util.Log.d("FirestoreUsuarioDS", "=== ACTUALIZAR FOTO ===")
+        android.util.Log.d("FirestoreUsuarioDS", "userId: $userId")
+        android.util.Log.d("FirestoreUsuarioDS", "fotoUrl length: ${fotoUrl.length}")
+        android.util.Log.d("FirestoreUsuarioDS", "fotoUrl size estimate: ${fotoUrl.toByteArray().size / 1024}KB")
+        
+        if (fotoUrl.toByteArray().size > 1000 * 1024) {
+            android.util.Log.w("FirestoreUsuarioDS", "ADVERTENCIA: La foto excede 1MB, puede fallar")
+        }
+        
         firestoreSafe("FirestoreUsuarioDS", Unit) {
             collection.document(userId).update("fotoUrl", fotoUrl).await()
+            android.util.Log.d("FirestoreUsuarioDS", "Foto actualizada correctamente en Firestore")
+        }
+    }
+
+    suspend fun actualizarNombre(userId: String, nombre: String) {
+        firestoreSafe("FirestoreUsuarioDS", Unit) {
+            collection.document(userId).update("nombre", nombre).await()
         }
     }
 
@@ -105,6 +121,13 @@ class FirestoreUsuarioDataSource @Inject constructor(
             val doc = docRef.get().await()
             val actuales = (doc.getLong("viajesCompletados") ?: 0).toInt()
             docRef.update("viajesCompletados", actuales + 1).await()
+        }
+    }
+    
+    suspend fun incrementarCampo(campo: String, userId: String) {
+        firestoreSafe("FirestoreUsuarioDS", Unit) {
+            collection.document(userId)
+                .update(campo, com.google.firebase.firestore.FieldValue.increment(1)).await()
         }
     }
 }

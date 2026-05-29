@@ -17,7 +17,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 3
-        versionName = "beta 0.5"
+        versionName = "beta 0.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -99,6 +99,10 @@ dependencies {
     
     // Coil para carga de imágenes
     implementation("io.coil-kt:coil:2.5.0")
+
+    // OkHttp para peticiones HTTP (FCM)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("org.json:json:20231013")
 
     // Tests unitarios
     testImplementation(libs.junit)

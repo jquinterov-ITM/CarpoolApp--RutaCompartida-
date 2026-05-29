@@ -10,7 +10,10 @@ interface UsuarioRepository {
     suspend fun actualizarVehiculo(usuarioId: String, vehiculo: Vehiculo)
     suspend fun actualizarFcmToken(usuarioId: String, token: String)
     suspend fun actualizarFotoUrl(usuarioId: String, fotoUrl: String)
+    suspend fun actualizarNombre(usuarioId: String, nombre: String)
     suspend fun actualizarEsConductor(usuarioId: String, esConductor: Boolean)
     suspend fun actualizarCalificacion(usuarioId: String, calificacion: Double)
     suspend fun incrementarViajesCompletados(usuarioId: String)
+    suspend fun incrementarViajesComoConductor(usuarioId: String)
+    suspend fun incrementarViajesComoPasajero(usuarioId: String)
 }

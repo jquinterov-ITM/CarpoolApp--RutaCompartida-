@@ -69,19 +69,40 @@ class FirestoreSolicitudDataSource @Inject constructor(
             null
         }
     }
+    
+    suspend fun getViajeById(tripId: String): com.carpoolapp.data.remote.dto.ViajeDto? {
+        return try {
+            val doc = firestore.collection("trips").document(tripId).get().await()
+            if (doc.exists()) {
+                com.carpoolapp.data.remote.dto.ViajeDto.fromDocument(tripId, doc.data ?: emptyMap())
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FirestoreSolicitudDS", "Error obteniendo viaje $tripId: ${e.message}", e)
+            null
+        }
+    }
 
-    suspend fun aceptarConTransaction(tripId: String, requestId: String) {
-        android.util.Log.d("FirestoreSolicitudDS", "Iniciando transacción para aceptar $requestId")
+suspend fun aceptarConTransaction(tripId: String, requestId: String) {
+        android.util.Log.d("FirestoreSolicitudDS", "=== INICIANDO TRANSACCIÓN ===")
+        android.util.Log.d("FirestoreSolicitudDS", "tripId: $tripId, requestId: $requestId")
+        
         firestoreSafe("FirestoreSolicitudDS", Unit) {
             try {
+                val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                android.util.Log.d("FirestoreSolicitudDS", "Usuario actual: ${currentUser?.uid ?: "null"}")
+                
                 firestore.runTransaction { transaction ->
                     val tripRef = firestore.collection("trips").document(tripId)
                     val requestRef = requestsCollection(tripId).document(requestId)
-                    
+
                     android.util.Log.d("FirestoreSolicitudDS", "Leyendo documentos...")
                     val trip = transaction.get(tripRef)
                     val request = transaction.get(requestRef)
                     
+                    android.util.Log.d("FirestoreSolicitudDS", "trip existe: ${trip.exists()}, request existe: ${request.exists()}")
+
                     if (!trip.exists()) {
                         android.util.Log.e("FirestoreSolicitudDS", "El viaje $tripId no existe")
                         throw Exception("El viaje no existe")
@@ -90,32 +111,65 @@ class FirestoreSolicitudDataSource @Inject constructor(
                         android.util.Log.e("FirestoreSolicitudDS", "La solicitud $requestId no existe")
                         throw Exception("La solicitud no existe")
                     }
-                    
+
                     val asientos = trip.getLong("asientosDisponibles") ?: 0
-                    android.util.Log.d("FirestoreSolicitudDS", "Asientos disponibles: $asientos")
+                    android.util.Log.d("FirestoreSolicitudDS", "Asientos disponibles antes: $asientos")
                     if (asientos <= 0) throw IllegalStateException("No hay asientos disponibles")
-                    
+
                     val asientosSolicitados = (request.getLong("asientosSolicitados") ?: 1).toInt()
                     android.util.Log.d("FirestoreSolicitudDS", "Asientos solicitados: $asientosSolicitados")
                     if (asientosSolicitados > asientos) {
                         throw IllegalStateException("No hay suficientes asientos disponibles")
                     }
-                    
+
                     val pasajerosActuales = trip.get("pasajeroIds") as? List<String> ?: emptyList()
                     val pasajeroId = request.getString("pasajeroId") ?: ""
                     android.util.Log.d("FirestoreSolicitudDS", "Pasajero ID: $pasajeroId, actuales: ${pasajerosActuales.size}")
                     
+                    if (pasajerosActuales.contains(pasajeroId)) {
+                        android.util.Log.w("FirestoreSolicitudDS", "El pasajero ya estaba aceptado")
+                        // No lanzar error, solo actualizar el estado
+                    }
+
+                    android.util.Log.d("FirestoreSolicitudDS", "Actualizando documentos...")
                     transaction.update(tripRef, "asientosDisponibles", asientos - asientosSolicitados)
-                    transaction.update(tripRef, "pasajeroIds", pasajerosActuales + pasajeroId)
+                    if (!pasajerosActuales.contains(pasajeroId)) {
+                        transaction.update(tripRef, "pasajeroIds", pasajerosActuales + pasajeroId)
+                    }
                     transaction.update(requestRef, "estado", "ACEPTADA")
-                    
-                    android.util.Log.d("FirestoreSolicitudDS", "Transacción completada")
+
+                    android.util.Log.d("FirestoreSolicitudDS", "Transacción completada exitosamente")
                 }.await()
-                android.util.Log.d("FirestoreSolicitudDS", "Solicitud aceptada exitosamente")
+                android.util.Log.d("FirestoreSolicitudDS", "=== TRANSACCIÓN EXITOSA ===")
             } catch (e: Exception) {
                 android.util.Log.e("FirestoreSolicitudDS", "Error en transacción: ${e.message}", e)
                 throw e
             }
         }
     }
+
+    fun getSolicitudesPorPasajero(pasajeroId: String): Flow<List<SolicitudDto>> = callbackFlow {
+        try {
+            val listener = firestore.collectionGroup("requests")
+                .whereEqualTo("pasajeroId", pasajeroId)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        android.util.Log.w("FirestoreSolicitudDS", "Error en listener global solicitudes: ${error.message}")
+                        trySend(emptyList())
+                        return@addSnapshotListener
+                    }
+                    val solicitudes = snapshot?.documents?.mapNotNull { doc ->
+                        val tripId = doc.reference.parent.parent?.id ?: return@mapNotNull null
+                        doc.toObject<SolicitudDto>()?.copy(id = doc.id, tripId = tripId)
+                    } ?: emptyList()
+                    android.util.Log.d("FirestoreSolicitudDS", "Solicitudes globales recibidas: ${solicitudes.size}")
+                    trySend(solicitudes)
+                }
+            awaitClose { listener.remove() }
+        } catch (e: Exception) {
+            android.util.Log.e("FirestoreSolicitudDS", "Error en listener global: ${e.message}")
+            trySend(emptyList())
+            close()
+        }
+}
 }

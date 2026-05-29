@@ -20,6 +20,7 @@ sealed class PerfilUiState {
     data class Error(val mensaje: String) : PerfilUiState()
     object VehiculoActualizado : PerfilUiState()
     object FotoActualizada : PerfilUiState()
+    object NombreActualizado : PerfilUiState()
     object ConductorActualizado : PerfilUiState()
 }
 
@@ -31,6 +32,10 @@ class PerfilViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<PerfilUiState>(PerfilUiState.Loading)
     val uiState: StateFlow<PerfilUiState> = _uiState.asStateFlow()
+    
+    // Flow separado para mensajes de feedback (no interrumpe el estado Success)
+    private val _feedbackMessage = MutableStateFlow<String?>(null)
+    val feedbackMessage: StateFlow<String?> = _feedbackMessage.asStateFlow()
 
     init {
         cargarPerfil()
@@ -56,9 +61,11 @@ class PerfilViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 usuarioRepository.actualizarVehiculo(uid, vehiculo)
-                _uiState.value = PerfilUiState.VehiculoActualizado
+                _feedbackMessage.value = "✅ Vehículo actualizado correctamente"
+                kotlinx.coroutines.delay(3000)
+                _feedbackMessage.value = null
             } catch (e: Exception) {
-                _uiState.value = PerfilUiState.Error(e.message ?: "Error al actualizar")
+                _feedbackMessage.value = "❌ Error: ${e.message ?: "Error al actualizar"}"
             }
         }
     }
@@ -67,10 +74,38 @@ class PerfilViewModel @Inject constructor(
         val uid = auth.currentUser?.uid ?: return
         viewModelScope.launch {
             try {
+                android.util.Log.d("PerfilViewModel", "Guardando foto de ${fotoUrl.length} caracteres para usuario $uid")
                 usuarioRepository.actualizarFotoUrl(uid, fotoUrl)
-                _uiState.value = PerfilUiState.FotoActualizada
+                android.util.Log.d("PerfilViewModel", "Foto guardada en Firestore - esperando snapshot listener...")
+                
+                // NO llamamos cargarPerfil() - el snapshot listener ya está activo desde init
+                // y automáticamente emitirá los datos actualizados cuando Firestore se actualice
+                // Solo mostramos el mensaje de éxito
+                _feedbackMessage.value = "✅ Foto de perfil actualizada"
+                kotlinx.coroutines.delay(3000)
+                _feedbackMessage.value = null
             } catch (e: Exception) {
-                _uiState.value = PerfilUiState.Error(e.message ?: "Error al actualizar foto")
+                android.util.Log.e("PerfilViewModel", "Error al guardar foto: ${e.message}", e)
+                _feedbackMessage.value = "❌ Error: ${e.message ?: "Error desconocido"}"
+            }
+        }
+    }
+
+    fun actualizarNombre(nombre: String) {
+        val uid = auth.currentUser?.uid ?: return
+        viewModelScope.launch {
+            try {
+                usuarioRepository.actualizarNombre(uid, nombre)
+                // Actualizar el estado Success con el nuevo nombre
+                val currentState = _uiState.value
+                if (currentState is PerfilUiState.Success) {
+                    _uiState.value = PerfilUiState.Success(currentState.usuario.copy(nombre = nombre))
+                }
+                _feedbackMessage.value = "✅ Nombre actualizado correctamente"
+                kotlinx.coroutines.delay(3000)
+                _feedbackMessage.value = null
+            } catch (e: Exception) {
+                _feedbackMessage.value = "❌ Error: ${e.message ?: "Error al actualizar nombre"}"
             }
         }
     }
@@ -80,9 +115,11 @@ class PerfilViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 usuarioRepository.actualizarEsConductor(uid, esConductor)
-                _uiState.value = PerfilUiState.ConductorActualizado
+                _feedbackMessage.value = "✅ Tipo de usuario actualizado"
+                kotlinx.coroutines.delay(3000)
+                _feedbackMessage.value = null
             } catch (e: Exception) {
-                _uiState.value = PerfilUiState.Error(e.message ?: "Error al actualizar")
+                _feedbackMessage.value = "❌ Error: ${e.message ?: "Error al actualizar"}"
             }
         }
     }

@@ -14,7 +14,9 @@ fun UsuarioDto.toDomain(): Usuario = Usuario(
     vehiculo = vehiculo?.toDomain(),
     esConductor = esConductor,
     calificacion = calificacion,
-    viajesCompletados = viajesCompletados
+    viajesCompletados = viajesCompletados,
+    viajesComoConductor = viajesComoConductor,
+    viajesComoPasajero = viajesComoPasajero
 )
 
 fun Usuario.toDto(): UsuarioDto = UsuarioDto(
@@ -25,5 +27,7 @@ fun Usuario.toDto(): UsuarioDto = UsuarioDto(
     vehiculo = vehiculo?.toDto(),
     esConductor = esConductor,
     calificacion = calificacion,
-    viajesCompletados = viajesCompletados
+    viajesCompletados = viajesCompletados,
+    viajesComoConductor = viajesComoConductor,
+    viajesComoPasajero = viajesComoPasajero
 )
